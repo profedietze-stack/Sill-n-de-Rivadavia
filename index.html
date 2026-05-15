@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Sillón de Rivadavia – Simulador de Economía Política</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   VARIABLES DE COLOR — modificá estos valores para cambiar
+   la paleta sin tocar el resto del CSS
+   ============================================================ */
+:root {
+  --navy:       #07111f;
+  --navy-mid:   #0d1e35;
+  --navy-card:  #112340;
+  --navy-light: #1a3358;
+  --blue:       #2563a8;
+  --blue-light: #3a7fd4;
+  --gold:       #c9a84c;
+  --gold-light: #f0c866;
+  --text:       #dce8fa;
+  --text-dim:   #8aabcc;
+  --white:      #ffffff;
+  --green:      #27ae60;
+  --yellow:     #f39c12;
+  --red:        #e74c3c;
+  --radius:     12px;
+  --radius-sm:  7px;
+  --shadow:     0 8px 32px rgba(0,0,0,0.55);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  height: -webkit-fill-available;
+  font-family: 'Barlow', sans-serif;
+  background: var(--navy);
+  color: var(--text);
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+.screen { display: none; min-height: 100vh; min-height: -webkit-fill-available; }
+.screen.active { display: flex; }
+
+/* ===========================================================
+   PANTALLA INICIO
+   =========================================================== */
+#screen-start {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #04090f 0%, #0a1a30 40%, #0f2447 70%, #071628 100%);
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+  padding-top: max(24px, env(safe-area-inset-top));
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+#screen-start::before {
+  content:'';
+  position:absolute; inset:0;
+  background:url('https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=1600&q=50') center/cover no-repeat;
+  opacity:.06; pointer-events:none;
+}
+
+.glow-orb {
+  position:absolute; border-radius:50%; pointer-events:none;
+}
+.glow-orb-1 {
+  width:600px; height:600px;
+  background:radial-gradient(circle,rgba(37,99,168,.18) 0%,transparent 70%);
+  top:-100px; left:-100px;
+}
+.glow-orb-2 {
+  width:400px; height:400px;
+  background:radial-gradient(circle,rgba(201,168,76,.12) 0%,transparent 70%);
+  bottom:-80px; right:-80px;
+}
+
+.start-card {
+  position:relative;
+  background:rgba(13,30,53,.9);
+  border:1px solid rgba(201,168,76,.25);
+  border-radius:20px;
+  padding:44px 52px;
+  max-width:560px; width:100%;
+  text-align:center;
+  backdrop-filter:blur(12px);
+  -webkit-backdrop-filter:blur(12px);
+  box-shadow:var(--shadow),0 0 60px rgba(37,99,168,.15);
+  animation:fadeInUp .7s ease both;
+}
+
+@keyframes fadeInUp {
+  from{opacity:0;transform:translateY(30px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.start-emblem { font-size:3.5rem; margin-bottom:6px; filter:drop-shadow(0 0 10px rgba(201,168,76,.4)); }
+.start-title {
+  font-family:'Playfair Display',serif;
+  font-size:2rem; font-weight:900;
+  color:var(--gold-light); line-height:1.2; margin-bottom:4px;
+  text-shadow:0 2px 12px rgba(201,168,76,.3);
+}
+.start-subtitle {
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:.85rem; letter-spacing:2.5px; text-transform:uppercase;
+  color:var(--text-dim); margin-bottom:6px;
+}
+.start-byline { font-size:.78rem; color:var(--gold); letter-spacing:1px; margin-bottom:28px; opacity:.85; }
+.divider { width:60px; height:2px; background:linear-gradient(90deg,transparent,var(--gold),transparent); margin:16px auto; }
+
+.start-img {
+  width:100%; max-height:160px; object-fit:cover;
+  border-radius:10px; margin-bottom:24px;
+  border:1px solid rgba(201,168,76,.2); opacity:.85;
+}
+
+.form-group { margin-bottom:20px; text-align:left; }
+.form-group label {
+  display:block; font-size:.78rem; letter-spacing:1.5px;
+  text-transform:uppercase; color:var(--text-dim); margin-bottom:8px; font-weight:600;
+}
+.form-group input {
+  width:100%; padding:12px 16px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(37,99,168,.4); border-radius:var(--radius-sm);
+  color:var(--white); font-family:'Barlow',sans-serif; font-size:1rem;
+  outline:none; transition:border .2s,box-shadow .2s;
+  -webkit-appearance: none;
+  appearance: none;
+  font-size: 16px; /* Prevents iOS zoom on focus */
+}
+.form-group input:focus { border-color:var(--gold); box-shadow:0 0 0 3px rgba(201,168,76,.15); }
+.form-group input::placeholder { color:rgba(255,255,255,.3); }
+.input-error { border-color:var(--red) !important; }
+
+.btn-row { display:flex; flex-direction:column; gap:10px; }
+
+.btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:13px 24px; border:none; border-radius:var(--radius-sm);
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:1.05rem; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+  cursor:pointer; transition:all .2s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.btn-primary {
+  background:linear-gradient(135deg,#1e5799,var(--blue));
+  color:var(--white); box-shadow:0 4px 20px rgba(37,99,168,.4);
+}
+.btn-primary:hover { background:linear-gradient(135deg,#2563a8,#3a8fd4); transform:translateY(-1px); }
+.btn-gold {
+  background:linear-gradient(135deg,#a07830,var(--gold)); color:#1a0e00;
+  box-shadow:0 4px 20px rgba(201,168,76,.3);
+}
+.btn-gold:hover { background:linear-gradient(135deg,#c9a84c,var(--gold-light)); transform:translateY(-1px); }
+.btn-outline {
+  background:transparent; border:1px solid rgba(138,171,204,.4); color:var(--text-dim);
+}
+.btn-outline:hover { border-color:var(--text); color:var(--text); background:rgba(255,255,255,.05); }
+.btn-danger { background:linear-gradient(135deg,#a83232,#e74c3c); color:var(--white); }
+.btn-danger:hover { transform:translateY(-1px); }
+.btn-sm { padding:8px 16px; font-size:.88rem; }
+
+/* ===========================================================
+   PANTALLA MANUAL
+   =========================================================== */
+#screen-manual {
+  flex-direction:column;
+  background:var(--navy);
+  overflow-y:auto;
+}
+
+.manual-header {
+  background:linear-gradient(135deg,var(--navy-card),var(--navy-light));
+  border-bottom:2px solid rgba(201,168,76,.3);
+  padding:28px 40px;
+  display:flex; align-items:center; gap:16px;
+  position:sticky; top:0; z-index:10;
+}
+.manual-header h1 { font-family:'Playfair Display',serif; font-size:1.5rem; color:var(--gold-light); }
+
+.manual-body { max-width:900px; margin:0 auto; padding:40px 32px; }
+
+.manual-section {
+  background:var(--navy-card);
+  border:1px solid rgba(37,99,168,.3);
+  border-radius:var(--radius);
+  padding:28px 32px; margin-bottom:24px;
+}
+.manual-section h2 {
+  font-family:'Playfair Display',serif;
+  color:var(--gold); font-size:1.3rem; margin-bottom:16px;
+  border-bottom:1px solid rgba(201,168,76,.2); padding-bottom:10px;
+}
+.manual-section h3 { color:var(--blue-light); font-size:1rem; margin:16px 0 8px; font-weight:600; }
+.manual-section p, .manual-section li { color:var(--text); line-height:1.75; font-size:.95rem; }
+.manual-section ul, .manual-section ol { padding-left:20px; margin:8px 0; }
+.manual-section li { margin-bottom:6px; }
+
+.ind-table { width:100%; border-collapse:collapse; margin:12px 0; }
+.ind-table th {
+  background:rgba(37,99,168,.3); padding:10px 14px; text-align:left;
+  font-size:.8rem; letter-spacing:1px; text-transform:uppercase;
+  color:var(--gold); border-bottom:1px solid rgba(201,168,76,.2);
+}
+.ind-table td {
+  padding:10px 14px; font-size:.9rem;
+  border-bottom:1px solid rgba(255,255,255,.05); vertical-align:top;
+}
+.ind-table tr:hover td { background:rgba(255,255,255,.03); }
+.badge-preview {
+  display:inline-block;
+  background:rgba(201,168,76,.15); border:1px solid var(--gold);
+  border-radius:20px; padding:4px 12px; font-size:.82rem; color:var(--gold); margin:4px;
+}
+
+/* ===========================================================
+   PANTALLA DE JUEGO — Layout principal
+   =========================================================== */
+#screen-game {
+  flex-direction:column;
+  background:var(--navy);
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Barra mandato */
+.mandate-bar {
+  background:var(--navy-card);
+  border-bottom:1px solid rgba(37,99,168,.4);
+  padding:10px 24px;
+  display:flex; align-items:center; gap:16px;
+  flex-shrink:0; flex-wrap:wrap; min-height:52px;
+}
+.mandate-info { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+.mandate-title { font-family:'Barlow Condensed',sans-serif; font-size:.75rem; text-transform:uppercase; letter-spacing:2px; color:var(--text-dim); white-space:nowrap; }
+.mandate-month { font-family:'Playfair Display',serif; font-size:1.1rem; color:var(--gold); font-weight:700; white-space:nowrap; }
+.mandate-track { flex:1; min-width:100px; background:rgba(255,255,255,.08); border-radius:20px; height:10px; overflow:hidden; }
+.mandate-fill { height:100%; border-radius:20px; background:linear-gradient(90deg,var(--blue),var(--gold)); transition:width .5s ease; }
+.year-markers { display:flex; gap:4px; }
+.year-marker { font-size:.7rem; color:var(--text-dim); background:rgba(255,255,255,.08); padding:2px 7px; border-radius:10px; white-space:nowrap; }
+.year-marker.active { background:rgba(201,168,76,.2); color:var(--gold); }
+.top-actions { margin-left:auto; display:flex; gap:8px; }
+
+/* Cuerpo del juego */
+.game-body {
+  display:flex; flex:1; min-height:0;
+  overflow:visible;
+}
+
+/* Panel de evento */
+.event-panel {
+  flex:0 0 55%;
+  display:flex; flex-direction:column;
+  overflow-y:auto;
+  -webkit-overflow-scrolling: touch;
+  padding:20px; gap:14px;
+  border-right:1px solid rgba(37,99,168,.25);
+}
+
+.event-card {
+  background:var(--navy-card);
+  border:1px solid rgba(37,99,168,.4);
+  border-radius:var(--radius);
+  overflow:hidden; box-shadow:var(--shadow);
+}
+
+/* Animación de entrada para el evento — se re-dispara añadiendo/quitando la clase */
+.event-card.animate-in {
+  animation:eventIn .35s ease both;
+}
+@keyframes eventIn {
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.event-img { width:100%; height:180px; object-fit:cover; display:block; }
+.event-img-placeholder {
+  width:100%; height:180px;
+  background:linear-gradient(135deg,var(--navy-light),var(--blue));
+  display:flex; align-items:center; justify-content:center; font-size:3.5rem;
+}
+
+.event-content { padding:20px 22px; }
+.event-tag {
+  display:inline-block; font-size:.68rem; letter-spacing:1.5px; text-transform:uppercase;
+  color:var(--gold); background:rgba(201,168,76,.12); border:1px solid rgba(201,168,76,.25);
+  border-radius:20px; padding:3px 10px; margin-bottom:10px;
+}
+.event-title { font-family:'Playfair Display',serif; font-size:1.35rem; font-weight:700; color:var(--white); margin-bottom:10px; line-height:1.3; }
+.event-desc { font-size:.91rem; line-height:1.75; color:var(--text); margin-bottom:18px; }
+
+.options-label { font-family:'Barlow Condensed',sans-serif; font-size:.72rem; letter-spacing:2px; text-transform:uppercase; color:var(--text-dim); margin-bottom:10px; }
+.options-grid { display:flex; flex-direction:column; gap:9px; }
+
+.option-btn {
+  background:rgba(255,255,255,.04); border:1px solid rgba(37,99,168,.35);
+  border-radius:var(--radius-sm); padding:13px 16px; text-align:left;
+  cursor:pointer; transition:all .2s; color:var(--text);
+  font-family:'Barlow',sans-serif; font-size:.9rem; line-height:1.5;
+  width:100%;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.option-btn:hover {
+  background:rgba(37,99,168,.2); border-color:var(--blue);
+  transform:translateX(4px); color:var(--white);
+}
+.opt-label { font-weight:700; color:var(--gold); margin-right:6px; font-family:'Barlow Condensed',sans-serif; font-size:.85rem; letter-spacing:1px; }
+
+/* Notificación de resultado */
+.notif-strip {
+  border-left:4px solid var(--blue); border-radius:var(--radius-sm);
+  padding:11px 16px; font-size:.87rem; color:var(--text);
+  background:var(--navy-card);
+  animation:fadeIn .3s ease; flex-shrink:0;
+}
+.notif-strip.ok { border-color:var(--green); background:rgba(39,174,96,.08); }
+.notif-strip.bad { border-color:var(--red); background:rgba(231,76,60,.08); }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+/* Dashboard */
+.dashboard {
+  flex:0 0 45%; overflow-y:auto;
+  -webkit-overflow-scrolling: touch;
+  padding:16px; display:flex; flex-direction:column; gap:8px;
+  background:var(--navy-mid);
+}
+.dash-header { font-family:'Barlow Condensed',sans-serif; font-size:.68rem; letter-spacing:2.5px; text-transform:uppercase; color:var(--text-dim); margin-bottom:2px; }
+
+.ind-card {
+  background:var(--navy-card);
+  border:1px solid rgba(37,99,168,.25);
+  border-radius:var(--radius-sm); padding:11px 14px; transition:border-color .3s;
+}
+.ind-card.zone-warning { border-color:rgba(243,156,18,.4); background:rgba(243,156,18,.04); }
+.ind-card.zone-danger { border-color:rgba(231,76,60,.5); background:rgba(231,76,60,.06); }
+
+.ind-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:7px; }
+.ind-name { font-size:.78rem; font-weight:600; color:var(--text-dim); display:flex; align-items:center; gap:6px; }
+.ind-val { font-family:'Playfair Display',serif; font-size:1.05rem; font-weight:700; }
+.ind-bar-track { height:5px; background:rgba(255,255,255,.08); border-radius:10px; overflow:hidden; }
+.ind-bar-fill { height:100%; border-radius:10px; transition:width .5s ease,background-color .4s; }
+.ind-foot { font-size:.68rem; margin-top:4px; display:flex; justify-content:space-between; color:var(--text-dim); }
+
+/* Footer */
+.game-footer {
+  background:var(--navy-card); border-top:1px solid rgba(37,99,168,.2);
+  padding:7px 24px; font-size:.76rem; color:var(--text-dim); font-style:italic; text-align:center; flex-shrink:0;
+}
+
+/* ===========================================================
+   PANTALLA FINAL
+   =========================================================== */
+#screen-end {
+  flex-direction:column; overflow-y:auto;
+  background:linear-gradient(135deg,#04090f 0%,#0a1a30 50%,#07111f 100%);
+  padding:40px 24px; align-items:center;
+}
+
+.end-card { max-width:820px; width:100%; text-align:center; }
+
+.diploma {
+  background:var(--navy-card); border-radius:20px; padding:44px 40px;
+  border:2px solid rgba(201,168,76,.35);
+  box-shadow:var(--shadow),0 0 60px rgba(201,168,76,.08);
+  margin-bottom:24px; position:relative; overflow:hidden;
+}
+.diploma::before {
+  content:''; position:absolute; top:-40px; right:-40px; width:200px; height:200px;
+  border-radius:50%; background:radial-gradient(circle,rgba(201,168,76,.08) 0%,transparent 70%);
+}
+.dip-medal { font-size:5rem; margin-bottom:10px; display:block; filter:drop-shadow(0 0 20px rgba(201,168,76,.5)); }
+.dip-tipo { font-family:'Barlow Condensed',sans-serif; font-size:.78rem; letter-spacing:3px; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px; }
+.dip-title { font-family:'Playfair Display',serif; font-size:2.2rem; color:var(--gold-light); margin-bottom:6px; text-shadow:0 2px 12px rgba(201,168,76,.3); }
+.dip-country { font-family:'Playfair Display',serif; font-size:1.2rem; color:var(--text); margin-bottom:20px; font-style:italic; }
+.dip-score { font-size:3.5rem; font-family:'Barlow Condensed',sans-serif; font-weight:700; color:var(--gold); margin-bottom:4px; }
+.dip-score-lbl { font-size:.75rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:2px; }
+
+.achievements-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(165px,1fr)); gap:10px; margin-bottom:24px; }
+.ach-card { background:var(--navy-card); border:1px solid rgba(37,99,168,.3); border-radius:var(--radius); padding:14px; text-align:center; transition:all .2s; }
+.ach-card.unlocked { border-color:var(--gold); background:rgba(201,168,76,.08); box-shadow:0 0 20px rgba(201,168,76,.1); }
+.ach-card.locked { opacity:.35; filter:grayscale(1); }
+.ach-icon { font-size:2.1rem; margin-bottom:7px; display:block; }
+.ach-name { font-size:.8rem; font-weight:700; color:var(--text); margin-bottom:4px; }
+.ach-desc { font-size:.7rem; color:var(--text-dim); line-height:1.4; }
+
+.stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(145px,1fr)); gap:9px; margin:14px 0; }
+.stat-box { background:rgba(255,255,255,.04); border:1px solid rgba(37,99,168,.2); border-radius:var(--radius-sm); padding:12px; text-align:center; }
+.stat-val { font-family:'Playfair Display',serif; font-size:1.5rem; font-weight:700; margin-bottom:4px; }
+.stat-lbl { font-size:.72rem; color:var(--text-dim); line-height:1.3; }
+
+.report-section { background:var(--navy-card); border:1px solid rgba(37,99,168,.25); border-radius:var(--radius); padding:22px 26px; margin-bottom:18px; text-align:left; }
+.report-section h3 { font-family:'Playfair Display',serif; color:var(--gold); font-size:1.1rem; margin-bottom:12px; }
+.report-section p { font-size:.88rem; line-height:1.7; color:var(--text); margin-bottom:9px; }
+
+/* ===========================================================
+   MODAL
+   =========================================================== */
+.modal-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(0,0,0,.75); z-index:200;
+  align-items:center; justify-content:center;
+  backdrop-filter:blur(4px);
+  -webkit-backdrop-filter:blur(4px); padding:24px;
+}
+.modal-overlay.open { display:flex; }
+
+.modal-box {
+  background:var(--navy-card); border:1px solid rgba(201,168,76,.3);
+  border-radius:16px; padding:30px; max-width:440px; width:100%;
+  text-align:center; box-shadow:var(--shadow);
+  animation:popIn .3s ease both;
+}
+@keyframes popIn { from{opacity:0;transform:scale(.9)} to{opacity:1;transform:scale(1)} }
+.modal-icon { font-size:3.2rem; margin-bottom:10px; }
+.modal-title { font-family:'Playfair Display',serif; font-size:1.35rem; color:var(--gold-light); margin-bottom:10px; }
+.modal-body { font-size:.9rem; color:var(--text); line-height:1.65; margin-bottom:16px; }
+.effects-list { display:flex; flex-wrap:wrap; gap:7px; justify-content:center; margin:10px 0 18px; }
+.ef-chip { font-size:.76rem; padding:3px 10px; border-radius:20px; font-weight:700; font-family:'Barlow Condensed',sans-serif; }
+.ef-good { background:rgba(39,174,96,.2); color:#5ddd8a; border:1px solid rgba(39,174,96,.3); }
+.ef-bad { background:rgba(231,76,60,.2); color:#ff7070; border:1px solid rgba(231,76,60,.3); }
+.modal-btns { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+
+/* ===========================================================
+   CRISIS OVERLAY
+   =========================================================== */
+.crisis-overlay {
+  display:none; position:fixed; inset:0;
+  background:rgba(140,0,0,.87); z-index:300;
+  align-items:center; justify-content:center;
+  flex-direction:column; text-align:center; padding:32px;
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+}
+.crisis-overlay.open { display:flex; animation:flashRed .5s ease; }
+@keyframes flashRed { 0%,100%{background:rgba(140,0,0,.87)} 50%{background:rgba(200,0,0,.95)} }
+.crisis-icon { font-size:5rem; margin-bottom:14px; }
+.crisis-title { font-family:'Playfair Display',serif; font-size:2.4rem; color:#fff; margin-bottom:10px; }
+.crisis-desc { font-size:1rem; color:rgba(255,255,255,.85); max-width:500px; line-height:1.65; margin-bottom:28px; }
+
+/* ===========================================================
+   TOAST DE LOGRO
+   =========================================================== */
+.ach-toast {
+  position:fixed; bottom:24px; right:24px;
+  background:var(--navy-card); border:1px solid var(--gold);
+  border-radius:var(--radius); padding:12px 18px;
+  display:flex; align-items:center; gap:12px;
+  z-index:500; box-shadow:var(--shadow); max-width:290px;
+  animation:toastIn .4s ease,toastOut .4s ease 2.8s both;
+}
+@keyframes toastIn { from{transform:translateX(120%);opacity:0} to{transform:translateX(0);opacity:1} }
+@keyframes toastOut { from{transform:translateX(0);opacity:1} to{transform:translateX(120%);opacity:0} }
+.toast-ico { font-size:1.8rem; }
+.toast-txt strong { display:block; color:var(--gold); font-size:.85rem; }
+.toast-txt span { font-size:.75rem; color:var(--text-dim); }
+
+/* ===========================================================
+   UTILS / SCROLL / RESPONSIVE
+   =========================================================== */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:var(--navy); }
+::-webkit-scrollbar-thumb { background:var(--navy-light); border-radius:10px; }
+::-webkit-scrollbar-thumb:hover { background:var(--blue); }
+
+.sep { height:1px; background:rgba(255,255,255,.07); margin:18px 0; }
+.center { text-align:center; }
+.mt12 { margin-top:12px; }
+.mt20 { margin-top:20px; }
+.mb16 { margin-bottom:16px; }
+.flex-row { display:flex; gap:10px; align-items:center; }
+.flex-wrap { flex-wrap:wrap; }
+
+@media (max-width:768px) {
+  #screen-game { height:auto; min-height:100vh; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+  .game-body { flex-direction:column; overflow:visible; }
+  .event-panel { flex:unset; border-right:none; border-bottom:1px solid rgba(37,99,168,.25); overflow:visible; min-height:auto; }
+  .dashboard { flex:unset; overflow:visible; min-height:auto; }
+  .year-markers { display:none; }
+  .start-card { padding:28px 22px; }
+  .start-title { font-size:1.6rem; }
+  .achievements-grid { grid-template-columns:repeat(2,1fr); }
+  .manual-body { padding:24px 14px; }
+  .diploma { padding:30px 18px; }
+  .dip-title { font-size:1.7rem; }
+  .stats-grid { grid-template-columns:repeat(2,1fr); }
+  .modal-box { padding:22px 18px; }
+  .ach-toast { bottom:16px; right:12px; left:12px; max-width:none; }
+}
+</style>
+</head>
+<body>
+
+<!-- =====================================================
+     PANTALLA INICIO
+     ===================================================== -->
+<div id="screen-start" class="screen active">
+  <div class="glow-orb glow-orb-1"></div>
+  <div class="glow-orb glow-orb-2"></div>
+  <div class="start-card">
+    <div class="start-emblem">🏛️</div>
+    <h1 class="start-title">Sillón de Rivadavia</h1>
+    <div class="start-subtitle">Simulador de Economía Política</div>
+    <div class="start-byline">✦ Creado por ProfeD ✦</div>
+    <div class="divider"></div>
+    <img class="start-img"
+      src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&q=70"
+      alt="Mercados financieros"
+      onerror="this.src='https://picsum.photos/seed/econpol/800/300'">
+
+    <div class="form-group">
+      <label for="country-name">🌐 Nombre de tu País</label>
+      <input type="text" id="country-name" placeholder="Ej: República de Belgrandia…" maxlength="40">
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="startGame()">🎮 Iniciar Juego</button>
+      <button class="btn btn-gold" id="load-btn" onclick="loadGame()">💾 Cargar Partida</button>
+      <button class="btn btn-outline" onclick="openManual()">📚 Manual Didáctico</button>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     PANTALLA MANUAL DIDÁCTICO
+     ===================================================== -->
+<div id="screen-manual" class="screen" style="flex-direction:column;overflow-y:auto;">
+  <div class="manual-header">
+    <span style="font-size:1.8rem">📚</span>
+    <div>
+      <h1>Manual Didáctico</h1>
+      <div style="font-size:.78rem;color:var(--text-dim)">Sillón de Rivadavia · Simulador de Economía Política · Creado por ProfeD</div>
+    </div>
+    <button class="btn btn-outline btn-sm" style="margin-left:auto" onclick="showScreen('screen-start')">← Volver</button>
+  </div>
+
+  <div class="manual-body">
+
+    <div class="manual-section">
+      <h2>📖 ¿De qué trata el juego?</h2>
+      <p>En <em>Sillón de Rivadavia</em> asumís la presidencia de tu propio país y debés gobernar durante <strong>4 años (48 meses/turnos)</strong>. Cada mes enfrentás un evento crítico —económico, social, político o ambiental— y elegís entre distintas decisiones que afectan ocho indicadores macroeconómicos.</p>
+      <p>El juego simula las tensiones reales de la gestión pública: toda decisión tiene costos y beneficios, y rara vez existe una opción perfecta. El objetivo pedagógico es comprender que la economía política es un campo de dilemas éticos y técnicos permanentes.</p>
+    </div>
+
+    <div class="manual-section">
+      <h2>📊 Los 8 Indicadores Económicos</h2>
+      <p>Cada indicador se mide en una escala de <strong>0 a 100</strong> y posee zonas de color: 🟢 verde (zona segura), 🟡 amarillo (zona de alerta) y 🔴 rojo (zona de crisis).</p>
+      <table class="ind-table">
+        <tr><th>Indicador</th><th>Descripción</th><th>Meta deseable</th><th>Zona crítica</th></tr>
+        <tr><td>📈 IPC / Inflación</td><td>Variación de precios al consumidor. Cuanto mayor, peor.</td><td>&lt; 40</td><td>&gt; 65</td></tr>
+        <tr><td>💸 Deuda Externa</td><td>Endeudamiento del Estado con acreedores internacionales.</td><td>&lt; 50</td><td>&gt; 70</td></tr>
+        <tr><td>💰 Reservas Internacionales</td><td>Divisas del Banco Central. Mayor = mejor respaldo monetario.</td><td>&gt; 60</td><td>&lt; 30</td></tr>
+        <tr><td>⚠️ Riesgo País</td><td>Confianza de los mercados internacionales en el Estado.</td><td>&lt; 40</td><td>&gt; 65</td></tr>
+        <tr><td>📉 Índice de Pobreza</td><td>% de la población bajo la línea de pobreza.</td><td>&lt; 30</td><td>&gt; 55 (derrota: &gt;80)</td></tr>
+        <tr><td>👥 Tasa de Desocupación</td><td>% de la PEA que busca trabajo sin encontrarlo.</td><td>&lt; 10</td><td>&gt; 20</td></tr>
+        <tr><td>🏭 Producción Industrial</td><td>Índice de actividad manufacturera. Mayor = mejor.</td><td>&gt; 65</td><td>&lt; 35</td></tr>
+        <tr><td>🤝 Confianza en el Gobierno</td><td>Aprobación ciudadana. Si llega a 0 → derrota inmediata.</td><td>&gt; 55</td><td>&lt; 30 (derrota: = 0)</td></tr>
+      </table>
+    </div>
+
+    <div class="manual-section">
+      <h2>🎮 Reglas de Juego</h2>
+      <h3>Estructura de un turno</h3>
+      <ol>
+        <li>Se presenta un <strong>evento aleatorio</strong> con contexto narrativo e imagen.</li>
+        <li>El jugador elige una de las opciones disponibles (2, 3 o 4 alternativas).</li>
+        <li>Los índices se actualizan según los efectos matemáticos de la decisión.</li>
+        <li>Se verifican condiciones de derrota y se desbloquean logros si corresponde.</li>
+        <li>La partida se <strong>guarda automáticamente</strong> en el navegador (LocalStorage).</li>
+      </ol>
+      <h3>Condiciones de Fin de Partida</h3>
+      <ul>
+        <li>✅ <strong>Victoria:</strong> completar los 48 meses de mandato.</li>
+        <li>❌ <strong>Derrota A:</strong> la Confianza llega a 0 (golpe de Estado o renuncia forzada).</li>
+        <li>❌ <strong>Derrota B:</strong> la Pobreza supera el 80% (crisis humanitaria irreversible).</li>
+      </ul>
+      <h3>Sistema de puntaje y diplomas</h3>
+      <ul>
+        <li>🥇 <strong>Diploma de Oro:</strong> puntaje ≥ 65</li>
+        <li>🥈 <strong>Diploma de Plata:</strong> puntaje 45–64</li>
+        <li>🥉 <strong>Diploma de Bronce:</strong> puntaje 25–44</li>
+        <li>📜 <strong>Gestión Criticada:</strong> puntaje &lt; 25</li>
+      </ul>
+    </div>
+
+    <div class="manual-section">
+      <h2>🏅 Logros Desbloqueables</h2>
+      <div>
+        <span class="badge-preview">🛡️ Estabilidad de Hierro</span>
+        <span class="badge-preview">💪 Líder de Masas</span>
+        <span class="badge-preview">🔍 Transparencia Total</span>
+        <span class="badge-preview">💳 Default Evitado</span>
+        <span class="badge-preview">🏦 Reservas Sólidas</span>
+        <span class="badge-preview">👷 Pleno Empleo</span>
+        <span class="badge-preview">🏭 País Productivo</span>
+        <span class="badge-preview">⚖️ Justicia Social</span>
+        <span class="badge-preview">🧗 Superviviente</span>
+        <span class="badge-preview">⭐ Gestor Ejemplar</span>
+      </div>
+    </div>
+
+    <div class="manual-section" style="border-color:rgba(201,168,76,.35)">
+      <h2>👩‍🏫 Sección de Evaluación Docente</h2>
+      <h3>🎯 El juego como disparador de debate</h3>
+      <p>Se recomienda que los estudiantes jueguen individualmente o en parejas. Al finalizar, el docente puede organizar un debate comparando las decisiones de cada grupo. Preguntas disparadoras:</p>
+      <ul>
+        <li>¿Qué decisiones resultaron más difíciles de tomar? ¿Por qué?</li>
+        <li>¿Existe alguna decisión "objetivamente correcta"? ¿O siempre hay <em>trade-offs</em>?</li>
+        <li>¿Qué relación existe entre las decisiones de política económica y la legitimidad democrática?</li>
+        <li>¿Cómo influyó la presión de los indicadores en rojo en tus elecciones?</li>
+        <li>¿Qué rol juega la ética en la gestión económica?</li>
+      </ul>
+      <h3>📝 Ensayo de justificación post-partida</h3>
+      <p>Luego de completar la partida, se solicita a los alumnos redactar un ensayo de entre 400 y 600 palabras que responda a:</p>
+      <ol>
+        <li><strong>Diagnóstico inicial:</strong> ¿En qué estado estaba el país al comenzar?</li>
+        <li><strong>Decisiones clave:</strong> describir al menos 3 decisiones cruciales y su justificación.</li>
+        <li><strong>Consecuencias:</strong> ¿Qué indicadores mejoraron y cuáles empeoraron? ¿Por qué?</li>
+        <li><strong>Reflexión ética:</strong> ¿Alguna decisión fue éticamente conflictiva?</li>
+        <li><strong>Conclusión:</strong> ¿Qué aprendieron sobre la economía política?</li>
+      </ol>
+      <h3>📋 Criterios de Evaluación Sugeridos</h3>
+      <table class="ind-table">
+        <tr><th>Criterio</th><th>Descripción</th><th>Puntos</th></tr>
+        <tr><td>Comprensión conceptual</td><td>Uso correcto de términos económicos (IPC, deuda, riesgo país, etc.)</td><td>30</td></tr>
+        <tr><td>Argumentación</td><td>Coherencia entre decisiones tomadas y justificación teórica</td><td>25</td></tr>
+        <tr><td>Reflexión crítica</td><td>Reconocimiento de dilemas éticos y trade-offs</td><td>25</td></tr>
+        <tr><td>Expresión escrita</td><td>Claridad, organización y ortografía del ensayo</td><td>20</td></tr>
+      </table>
+      <h3>💡 Actividades complementarias</h3>
+      <ul>
+        <li>Comparar eventos del juego con situaciones reales de la historia argentina (crisis 2001, hiperinflación 1989, etc.).</li>
+        <li>Investigar los valores actuales de los indicadores reales de Argentina.</li>
+        <li>Role-play: asignar roles (sindicatos, acreedores, sociedad civil) y debatir una decisión del juego.</li>
+        <li>Analizar discursos de líderes que aparecen en las frases célebres del juego.</li>
+      </ul>
+    </div>
+
+    <div class="manual-section">
+      <h2>⚙️ Ajuste de Dificultad para Docentes</h2>
+      <p>Al abrir el archivo HTML con cualquier editor de texto, buscá el bloque marcado con <code>// === CONFIG ===</code>. Podés modificar el objeto <code>CONFIG</code> para cambiar:</p>
+      <ul>
+        <li><strong>INITIAL:</strong> valores iniciales de cada indicador.</li>
+        <li><strong>DEFEAT_CONFIANZA / DEFEAT_POBREZA:</strong> umbrales de derrota.</li>
+        <li><strong>EFFECT_MULTIPLIER:</strong> severidad de los eventos (0.7 = fácil, 1.5 = difícil).</li>
+        <li><strong>TOTAL_TURNS:</strong> duración del mandato (por defecto 48 meses).</li>
+      </ul>
+    </div>
+
+    <div class="center mt20 mb16">
+      <button class="btn btn-primary" onclick="showScreen('screen-start')">← Volver al Menú</button>
+    </div>
+  </div>
+</div>
+
+<!-- =====================================================
+     PANTALLA DE JUEGO
+     ===================================================== -->
+<div id="screen-game" class="screen">
+
+  <!-- Barra de mandato -->
+  <div class="mandate-bar">
+    <div class="mandate-info">
+      <span class="mandate-title">🏛️ Mandato</span>
+      <span class="mandate-month" id="month-label">Mes 1 / 48</span>
+    </div>
+    <div class="mandate-track">
+      <div class="mandate-fill" id="mandate-fill" style="width:0%"></div>
+    </div>
+    <div class="year-markers" id="year-markers"></div>
+    <div class="top-actions">
+      <button class="btn btn-outline btn-sm" onclick="doSave()">💾 Guardar</button>
+      <button class="btn btn-outline btn-sm" onclick="doQuit()">🚪 Salir</button>
+    </div>
+  </div>
+
+  <!-- Cuerpo -->
+  <div class="game-body">
+
+    <!-- Panel evento -->
+    <div class="event-panel" id="event-panel">
+      <div id="notif-strip" class="notif-strip" style="display:none"></div>
+      <div class="event-card" id="event-card">
+        <div id="ev-img-wrap"></div>
+        <div class="event-content">
+          <div class="event-tag" id="ev-tag">—</div>
+          <div class="event-title" id="ev-title">Cargando…</div>
+          <div class="event-desc" id="ev-desc"></div>
+          <div class="options-label">⚖️ TU DECISIÓN:</div>
+          <div class="options-grid" id="ev-options"></div>
+        </div>
+      </div>
+      <div style="text-align:center;color:var(--text-dim);font-size:.78rem;padding-bottom:4px" id="country-game-label"></div>
+    </div>
+
+    <!-- Dashboard -->
+    <div class="dashboard">
+      <div class="dash-header">📊 Panel de Indicadores Macroeconómicos</div>
+      <div id="indicators-wrap"></div>
+    </div>
+  </div>
+
+  <div class="game-footer" id="game-footer">💬 <em>Cargando frase…</em></div>
+</div>
+
+<!-- =====================================================
+     PANTALLA FINAL
+     ===================================================== -->
+<div id="screen-end" class="screen">
+  <div class="end-card">
+
+    <div class="diploma" id="diploma-box">
+      <span class="dip-medal" id="dip-medal">🥇</span>
+      <div class="dip-tipo" id="dip-tipo">DIPLOMA DE GESTIÓN</div>
+      <div class="dip-title" id="dip-title">Gestión Ejemplar</div>
+      <div class="dip-country" id="dip-country">República Ejemplo</div>
+      <div class="dip-score" id="dip-score">72</div>
+      <div class="dip-score-lbl">PUNTAJE FINAL DE GESTIÓN</div>
+    </div>
+
+    <div class="report-section">
+      <h3>📋 Análisis de tu Gestión</h3>
+      <div id="analysis-text"></div>
+    </div>
+
+    <div class="report-section">
+      <h3>📊 Indicadores Finales</h3>
+      <div class="stats-grid" id="final-stats"></div>
+    </div>
+
+    <div class="report-section">
+      <h3>🏅 Logros Obtenidos</h3>
+      <div class="achievements-grid" id="ach-grid"></div>
+    </div>
+
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:40px">
+      <button class="btn btn-primary" onclick="restartGame()">🔄 Jugar de Nuevo</button>
+      <button class="btn btn-outline" onclick="openManual()">📚 Manual Didáctico</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de confirmación -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <div class="modal-icon" id="m-icon">❓</div>
+    <div class="modal-title" id="m-title">¿Confirmás tu decisión?</div>
+    <div class="modal-body" id="m-body">—</div>
+    <div class="effects-list" id="m-effects"></div>
+    <div class="modal-btns">
+      <button class="btn btn-primary" id="m-confirm-btn">✅ Confirmar</button>
+      <button class="btn btn-outline" onclick="closeModal()">↩ Volver</button>
+    </div>
+  </div>
+</div>
+
+<!-- Crisis / Game Over -->
+<div class="crisis-overlay" id="crisis-overlay">
+  <div class="crisis-icon" id="cr-icon">💀</div>
+  <div class="crisis-title" id="cr-title">FIN DE MANDATO</div>
+  <div class="crisis-desc" id="cr-desc">—</div>
+  <button class="btn btn-danger" onclick="goToEndScreen()">📋 Ver Resultados</button>
+</div>
+
+<!-- =====================================================
+     JAVASCRIPT
+     ===================================================== -->
+<script>
+"use strict";
+
+/* ============================================================
+   === CONFIG === — Modificá estos valores para ajustar dificultad
+   ============================================================ */
+const CONFIG = {
+  TOTAL_TURNS: 48,
+
+  // Valores iniciales de indicadores (escala 0–100)
+  INITIAL: {
+    ipc:          50,   // Inflación: mayor = peor
+    deuda:        40,   // Deuda externa: mayor = peor
+    reservas:     60,   // Reservas: mayor = mejor
+    riesgo:       35,   // Riesgo país: mayor = peor
+    pobreza:      35,   // Pobreza: mayor = peor
+    desocupacion: 12,   // Desempleo: mayor = peor
+    produccion:   60,   // Producción: mayor = mejor
+    confianza:    65,   // Confianza ciudadana: mayor = mejor
+  },
+
+  DEFEAT_CONFIANZA: 0,   // Confianza = 0 → derrota
+  DEFEAT_POBREZA:  80,   // Pobreza > 80 → derrota
+
+  // Multiplicador de efectos: 0.7 = fácil | 1.0 = normal | 1.5 = difícil
+  EFFECT_MULTIPLIER: 1.0,
+
+  // Umbrales por indicador
+  // low_bad:true → el índice es bueno cuando es alto (reservas, producción, confianza)
+  THRESHOLDS: {
+    ipc:          { low_bad:false, warn:40, danger:65 },
+    deuda:        { low_bad:false, warn:50, danger:70 },
+    reservas:     { low_bad:true,  warn:60, danger:30 },
+    riesgo:       { low_bad:false, warn:40, danger:65 },
+    pobreza:      { low_bad:false, warn:30, danger:55 },
+    desocupacion: { low_bad:false, warn:10, danger:20 },
+    produccion:   { low_bad:true,  warn:65, danger:35 },
+    confianza:    { low_bad:true,  warn:60, danger:30 },
+  },
+
+  DIPLOMA_GOLD:   65,
+  DIPLOMA_SILVER: 45,
+  DIPLOMA_BRONZE: 25,
+};
+
+/* ============================================================
+   FRASES CÉLEBRES (15)
+   ============================================================ */
+const QUOTES = [
+  { text:"Seamos libres, que lo demás no importa nada.", author:"General José de San Martín" },
+  { text:"El amor a la patria es el primer deber del ciudadano.", author:"Manuel Belgrano" },
+  { text:"Para el hombre culto, la pobreza nunca ha sido un mal.", author:"Domingo F. Sarmiento" },
+  { text:"La democracia se alimenta de debate y participación ciudadana.", author:"Raúl Alfonsín" },
+  { text:"Un pueblo que no sabe para qué sirve su gobierno no puede ser libre.", author:"Juan B. Alberdi" },
+  { text:"La injusticia en cualquier lugar es una amenaza a la justicia en todas partes.", author:"Martin Luther King Jr." },
+  { text:"El precio de la libertad es la eterna vigilancia.", author:"Thomas Jefferson" },
+  { text:"La economía es el método; el objetivo es cambiar el alma.", author:"Margaret Thatcher" },
+  { text:"La pobreza no es accidental. Como la esclavitud, es obra del hombre.", author:"Nelson Mandela" },
+  { text:"El éxito no es definitivo, el fracaso no es fatal: lo que cuenta es el coraje de continuar.", author:"Winston Churchill" },
+  { text:"No son los gobernantes los que hacen las naciones, son las naciones las que hacen a sus gobernantes.", author:"Simón Bolívar" },
+  { text:"La inflación es la forma de tributación que el gobierno puede imponer sin legislación.", author:"Milton Friedman" },
+  { text:"Cuando los gobiernos temen al pueblo, hay libertad. Cuando el pueblo teme al gobierno, hay tiranía.", author:"Thomas Jefferson" },
+  { text:"Nunca dudes de que un grupo de ciudadanos comprometidos puede cambiar el mundo.", author:"Margaret Mead" },
+  { text:"El único modo de hacer un gran trabajo es amar lo que hacés.", author:"Steve Jobs" },
+];
+
+/* ============================================================
+   LOGROS (10)
+   ============================================================ */
+const ACHIEVEMENTS = [
+  { id:"hierro",       icon:"🛡️", name:"Estabilidad de Hierro",  desc:"El IPC nunca superó 40 durante todo el mandato.",         check: s => s.adata.ipcNeverHigh },
+  { id:"masas",        icon:"💪", name:"Líder de Masas",          desc:"La confianza ciudadana llegó al 90% o más.",              check: s => s.adata.confianzaMax >= 90 },
+  { id:"transparencia",icon:"🔍", name:"Transparencia Total",     desc:"Nunca elegiste una opción marcada como corrupta.",        check: s => s.adata.neverCorrupt },
+  { id:"default",      icon:"💳", name:"Default Evitado",         desc:"Terminaste el mandato con la deuda externa bajo 70.",     check: s => s.indicadores.deuda < 70 },
+  { id:"reservas",     icon:"🏦", name:"Reservas Sólidas",        desc:"Las reservas internacionales superaron 70 al finalizar.", check: s => s.indicadores.reservas > 70 },
+  { id:"empleo",       icon:"👷", name:"Pleno Empleo",            desc:"La desocupación quedó bajo 8% al finalizar.",            check: s => s.indicadores.desocupacion < 8 },
+  { id:"produccion",   icon:"🏭", name:"País Productivo",         desc:"La producción industrial superó 75 al finalizar.",       check: s => s.indicadores.produccion > 75 },
+  { id:"justicia",     icon:"⚖️", name:"Justicia Social",         desc:"La pobreza quedó bajo 20% al finalizar el mandato.",     check: s => s.indicadores.pobreza < 20 },
+  { id:"superv",       icon:"🧗", name:"Superviviente",           desc:"Completaste 48 meses enfrentando 2 o más crisis severas.",check: s => s.adata.crisisCount >= 2 && s.turn >= 48 },
+  { id:"ejemplar",     icon:"⭐", name:"Gestor Ejemplar",         desc:"Todos los índices terminaron en zona segura o de alerta.",check: s => getScore(s.indicadores) >= 65 },
+];
+
+/* ============================================================
+   LOS 40 EVENTOS
+   Estructura: { id, tag, titulo, descripcion, imagen, opciones[] }
+   Opción: { texto, efectos:{ipc,deuda,reservas,riesgo,pobreza,desocupacion,produccion,confianza}, corrupta? }
+   ============================================================ */
+const EVENTS = [
+  {
+    id:1, tag:"🚨 Crisis Financiera",
+    titulo:"Vencimiento de Deuda Soberana",
+    descripcion:"El Ministerio de Economía informa que vencen esta semana USD 4.500 millones en bonos soberanos. Las reservas del Banco Central son escasas y los mercados internacionales siguen cada movimiento con lupa. Economistas advierten que un default desordenado podría disparar el riesgo país y devaluar la moneda de forma abrupta. La ciudadanía espera con ansiedad. Cada opción tiene consecuencias sistémicas que se propagarán por toda la economía.",
+    imagen:"https://picsum.photos/seed/debt-crisis-1/800/360",
+    opciones:[
+      { texto:"🤝 Renegociar con quita del 30%: proponer a los acreedores una quita voluntaria a cambio de nuevos plazos más largos.", efectos:{ipc:3,deuda:-8,reservas:-4,riesgo:-10,pobreza:2,desocupacion:1,produccion:-2,confianza:6} },
+      { texto:"💵 Pagar a todo costo: usar todas las reservas disponibles para cumplir con los vencimientos y preservar el crédito.", efectos:{ipc:6,deuda:-5,reservas:-15,riesgo:-6,pobreza:5,desocupacion:3,produccion:-4,confianza:-4} },
+      { texto:"🔴 Default unilateral: suspender los pagos y esperar reestructuración con el FMI como árbitro.", efectos:{ipc:12,deuda:-18,reservas:5,riesgo:28,pobreza:9,desocupacion:6,produccion:-12,confianza:-14} },
+    ]
+  },
+  {
+    id:2, tag:"✊ Conflicto Laboral",
+    titulo:"Huelga General Docente",
+    descripcion:"La Confederación de Educadores Nacionales declara huelga por tiempo indeterminado tras el rechazo de una paritaria que solicita una actualización salarial del 45% frente a una inflación proyectada del 60%. Más de 8 millones de estudiantes quedan sin clases. Las escuelas públicas están vacías y los padres organizan ollas populares en las plazas. La agenda educativa del gobierno colapsa. El mundo observa cómo respondés ante este conflicto estructural.",
+    imagen:"https://picsum.photos/seed/teacher-strike-2/800/360",
+    opciones:[
+      { texto:"✅ Ceder a las demandas: otorgar el aumento solicitado del 45% con cláusula de revisión semestral.", efectos:{ipc:6,deuda:3,reservas:-2,riesgo:-3,pobreza:-4,desocupacion:-2,produccion:-1,confianza:10} },
+      { texto:"🔄 Acuerdo intermedio: ofrecer 28% inmediato con cláusula de revisión trimestral atada al CER.", efectos:{ipc:3,deuda:1,reservas:-1,riesgo:-1,pobreza:-2,desocupacion:0,produccion:0,confianza:4} },
+      { texto:"🚫 Rechazar las demandas: declarar el servicio esencial y emplazar a los docentes a volver al trabajo.", efectos:{ipc:0,deuda:0,reservas:1,riesgo:4,pobreza:3,desocupacion:1,produccion:1,confianza:-12} },
+    ]
+  },
+  {
+    id:3, tag:"💱 Política Cambiaria",
+    titulo:"Presión Extrema sobre el Tipo de Cambio",
+    descripcion:"El dólar paralelo triplicó su valor respecto al oficial. Las importaciones esenciales —medicamentos, energía, insumos industriales— se encarecen de forma acelerada. El Banco Central pierde reservas a razón de USD 100 millones diarios. Economistas del FMI, del gobierno y de la oposición tienen recetas completamente distintas. El ministro de Economía te advierte que el tiempo se agota y la presión especulativa sobre la moneda no cede.",
+    imagen:"https://picsum.photos/seed/currency-pressure-3/800/360",
+    opciones:[
+      { texto:"📉 Devaluación controlada del 35%: sincerar el tipo de cambio de una sola vez y absorber el shock inicial.", efectos:{ipc:16,deuda:5,reservas:10,riesgo:-5,pobreza:10,desocupacion:2,produccion:6,confianza:-10} },
+      { texto:"🔒 Reforzar el cepo cambiario: controles estrictos sobre compra de divisas y transferencias al exterior.", efectos:{ipc:5,deuda:3,reservas:-12,riesgo:9,pobreza:3,desocupacion:1,produccion:-6,confianza:-5} },
+    ]
+  },
+  {
+    id:4, tag:"🏥 Salud Pública",
+    titulo:"Epidemia de Dengue Sin Precedentes",
+    descripcion:"El Ministerio de Salud reporta 180.000 casos confirmados de dengue en un solo mes, con hospitales públicos desbordados y desabastecimiento de sueros y plaquetas. Cuatro departamentos del norte declaran emergencia sanitaria. La OPS advierte que sin intervención urgente la mortalidad podría escalar rápidamente. El gasto en salud ya consume el 12% del PBI. La imagen internacional del país está en juego frente a esta crisis humanitaria.",
+    imagen:"https://picsum.photos/seed/dengue-epidemic-4/800/360",
+    opciones:[
+      { texto:"🏥 Emergencia sanitaria nacional: redirigir presupuesto y solicitar asistencia técnica y financiera internacional.", efectos:{ipc:2,deuda:5,reservas:-3,riesgo:-2,pobreza:-6,desocupacion:-2,produccion:-3,confianza:12} },
+      { texto:"🚁 Campaña masiva de fumigación y distribución de mosquiteros: prevención a escala nacional.", efectos:{ipc:1,deuda:3,reservas:-2,riesgo:-1,pobreza:-3,desocupacion:0,produccion:-1,confianza:6} },
+      { texto:"📊 Respuesta descentralizada: delegar a las provincias sin asistencia fiscal adicional del gobierno nacional.", efectos:{ipc:0,deuda:0,reservas:0,riesgo:3,pobreza:4,desocupacion:1,produccion:-1,confianza:-8} },
+    ]
+  },
+  {
+    id:5, tag:"🔴 Corrupción",
+    titulo:"Escándalo de Sobreprecios en Obra Pública",
+    descripcion:"Una investigación periodística de alcance nacional revela que funcionarios de tu gobierno cobraron sobornos de constructoras a cambio de contratos inflados al doble de su valor real en el programa de autopistas federales. Los videos son virales, el fiscal general pide indagatoria a tres ministros y la oposición exige tu renuncia. La prensa internacional recoge la noticia. Tenés que actuar de inmediato: cada decisión define tu perfil moral como gobernante.",
+    imagen:"https://picsum.photos/seed/corruption-scandal-5/800/360",
+    opciones:[
+      { texto:"⚖️ Tolerancia cero: separar y entregar a la justicia a todos los funcionarios implicados de inmediato.", efectos:{ipc:0,deuda:0,reservas:0,riesgo:-5,pobreza:0,desocupacion:0,produccion:0,confianza:14} },
+      { texto:"🔇 Enfriar el escándalo mediáticamente: cambios cosméticos, comunicado de prensa y esperar que pase.", efectos:{ipc:0,deuda:0,reservas:0,riesgo:2,pobreza:0,desocupacion:0,produccion:0,confianza:-4} },
+      { texto:"🛡️ Defender a los acusados: calificar la investigación de 'lawfare' y montaje de la oposición.", corrupta:true, efectos:{ipc:0,deuda:0,reservas:0,riesgo:8,pobreza:0,desocupacion:0,produccion:0,confianza:-18} },
+      { texto:"🔎 Auditoría externa internacional: ordenar revisión total de toda la obra pública del período.", efectos:{ipc:0,deuda:1,reservas:0,riesgo:-7,pobreza:0,desocupacion:0,produccion:1,confianza:10} },
+    ]
+  },
+  {
+    id:6, tag:"🌾 Sector Agropecuario",
+    titulo:"La Peor Sequía en 50 Años",
+    descripcion:"La Bolsa de Comercio de Rosario estima pérdidas de USD 15.000 millones en la cosecha fina por una sequía prolongada que afecta las principales cuencas agrícolas. El ingreso de divisas por exportaciones caerá a la mitad. Las reservas del Banco Central ya son negativas en términos netos. Las economías regionales están devastadas y la desocupación rural sube aceleradamente. El campo reclama ayuda de emergencia con urgencia.",
+    imagen:"https://picsum.photos/seed/drought-campo-6/800/360",
+    opciones:[
+      { texto:"💰 Subsidios de emergencia directos al sector agropecuario afectado por la sequía.", efectos:{ipc:4,deuda:4,reservas:-3,riesgo:1,pobreza:-3,desocupacion:-3,produccion:4,confianza:6} },
+      { texto:"📉 Reducir las retenciones a las exportaciones agropecuarias de forma temporaria.", efectos:{ipc:2,deuda:2,reservas:7,riesgo:-4,pobreza:0,desocupacion:-2,produccion:5,confianza:3} },
+      { texto:"🌍 Solicitar créditos climáticos internacionales al BID y Banco Mundial.", efectos:{ipc:0,deuda:6,reservas:8,riesgo:-2,pobreza:-2,desocupacion:-1,produccion:2,confianza:4} },
+    ]
+  },
+  {
+    id:7, tag:"🏦 FMI",
+    titulo:"Acuerdo o Conflicto con el FMI",
+    descripcion:"El Fondo Monetario Internacional ofrece un préstamo de USD 20.000 millones de Stand-By a cambio de un programa de reformas estructurales: déficit fiscal 0% en 18 meses, liberalización del mercado laboral y eliminación de subsidios energéticos. Los sindicatos amenazan con huelga general si se acepta. Los mercados internacionales celebrarán el acuerdo. La oposición lo llama 'entrega de soberanía'. El Congreso espera tu decisión.",
+    imagen:"https://picsum.photos/seed/fmi-negotiation-7/800/360",
+    opciones:[
+      { texto:"✅ Aceptar el acuerdo completo: disciplina fiscal total y reformas estructurales.", efectos:{ipc:-4,deuda:8,reservas:18,riesgo:-15,pobreza:7,desocupacion:5,produccion:-3,confianza:-8} },
+      { texto:"🔄 Renegociar metas más flexibles: pedir plazos más largos y menores exigencias sociales.", efectos:{ipc:-1,deuda:4,reservas:10,riesgo:-8,pobreza:2,desocupacion:1,produccion:-1,confianza:-2} },
+      { texto:"❌ Rechazar el acuerdo: ajuste propio gradual sin condicionamientos externos.", efectos:{ipc:3,deuda:0,reservas:-5,riesgo:12,pobreza:3,desocupacion:2,produccion:-2,confianza:5} },
+    ]
+  },
+  {
+    id:8, tag:"✊ Conflicto Social",
+    titulo:"Movilización Masiva por el Desempleo",
+    descripcion:"Organizaciones sociales, piqueteros y desocupados cortan rutas y accesos a ciudades principales en 14 provincias. Las imágenes de familias sin alimento recorren las redes sociales y el mundo. El INDEC confirma que la desocupación ya alcanzó el 18% y la informalidad laboral toca el 45%. Tu gobierno enfrenta la mayor presión social desde que asumió. La respuesta que des será recordada en la historia política del país.",
+    imagen:"https://picsum.photos/seed/protest-desempleo-8/800/360",
+    opciones:[
+      { texto:"💼 Programa de empleo de emergencia: contratar desocupados en obras de infraestructura pública.", efectos:{ipc:3,deuda:4,reservas:-2,riesgo:-2,pobreza:-5,desocupacion:-5,produccion:3,confianza:9} },
+      { texto:"💬 Mesa de diálogo nacional: convocar a sindicatos, empresas y organizaciones sociales.", efectos:{ipc:0,deuda:0,reservas:0,riesgo:-3,pobreza:-2,desocupacion:-1,produccion:0,confianza:7} },
+      { texto:"🚔 Despejar los cortes por orden judicial: priorizar la libertad de circulación sobre el derecho a protesta.", efectos:{ipc:0,deuda:0,reservas:0,riesgo:4,pobreza:2,desocupacion:0,produccion:1,confianza:-12} },
+    ]
+  },
+  {
+    id:9, tag:"📊 Política Fiscal",
+    titulo:"Reforma Tributaria Integral",
+    descripcion:"Tu equipo económico presenta un ambicioso proyecto de reforma impositiva. El sistema actual es regresivo, ineficiente y lleno de exenciones que benefician a los sectores más concentrados. La reforma propone eliminar beneficios a grandes fortunas, crear un impuesto a la herencia y simplificar el sistema para los pequeños contribuyentes. Las cámaras empresariales amenazan con desinversión. Economistas progresistas la apoyan. El Congreso se muestra dividido.",
+    imagen:"https://picsum.photos/seed/tax-reform-9/800/360",
+    opciones:[
+      { texto:"💎 Reforma progresiva completa: impuesto a la riqueza, herencia y eliminación de exenciones a grandes capitales.", efectos:{ipc:-2,deuda:-5,reservas:3,riesgo:4,pobreza:-6,desocupacion:-2,produccion:-3,confianza:8} },
+      { texto:"📋 Reforma parcial: solo simplificación tributaria para pymes, sin tocar grandes fortunas.", efectos:{ipc:-1,deuda:-2,reservas:1,riesgo:0,pobreza:-2,desocupacion:-1,produccion:2,confianza:3} },
+      { texto:"📉 Reforma regresiva: bajar el impuesto a las ganancias corporativas para atraer inversión extranjera.", efectos:{ipc:0,deuda:-1,reservas:0,riesgo:-4,pobreza:2,desocupacion:-2,produccion:5,confianza:-4} },
+      { texto:"🚫 Suspender la reforma: el Congreso no tiene los votos y el conflicto político es demasiado alto.", efectos:{ipc:0,deuda:0,reservas:0,riesgo:0,pobreza:0,desocupacion:0,produccion:0,confianza:-3} },
+    ]
+  },
+  {
+    id:10, tag:"⚡ Energía",
+    titulo:"Apagones Masivos en Plena Ola de Calor",
+    descripcion:"El sistema interconectado nacional colapsa durante una ola de calor histórica de 42°C. Los apagones afectan a 15 millones de personas durante más de 12 horas. Las industrias paralizan su producción. Los hospitales funcionan con generadores de emergencia. Las pérdidas económicas se estiman en USD 800 millones por día. La infraestructura energética no se ha renovado en décadas y el déficit del sector supera el 30% del PBI. Necesitás actuar ya.",
+    imagen:"https://picsum.photos/seed/energy-crisis-10/800/360",
+    opciones:[
+      { texto:"🏗️ Plan de inversión en infraestructura eléctrica: licitación pública de emergencia de nuevas plantas.", efectos:{ipc:2,deuda:5,reservas:-3,riesgo:-3,pobreza:-1,desocupacion:-4,produccion:4,confianza:7} },
+      { texto:"🌱 Transición a energías renovables acelerada: parques eólicos y solares en 24 meses.", efectos:{ipc:1,deuda:7,reservas:-4,riesgo:-2,pobreza:-1,desocupacion:-5,produccion:3,confianza:5} },
+      { texto:"🛢️ Aumentar importación de gas natural licuado (GNL): solución de corto plazo para la demanda inmediata.", efectos:{ipc:4,deuda:3,reservas:-7,riesgo:1,pobreza:1,desocupacion:0,produccion:5,confianza:2} },
+    ]
+  },
+  {
+    id:11, tag:"💼 Inversión Extranjera",
+    titulo:"Megaoferta por el Litio de la Puna",
+    descripcion:"Un consorcio europeo-asiático ofrece USD 8.000 millones para desarrollar el yacimiento de litio de Puna-Norte, el segundo más grande del mundo. La condición: exención impositiva por 15 años, repatriación irrestricta de utilidades y no sindicalización de los trabajadores. Los ambientalistas advierten sobre el impacto en los humedales. Las comunidades originarias piden ser consultadas. La presión del mercado de baterías eléctricas es enorme.",
+    imagen:"https://picsum.photos/seed/lithium-invest-11/800/360",
+    opciones:[
+      { texto:"✅ Aceptar las condiciones tal como vienen: el desarrollo económico es prioritario ahora.", efectos:{ipc:-1,deuda:-3,reservas:10,riesgo:-8,pobreza:-4,desocupacion:-5,produccion:9,confianza:4} },
+      { texto:"🤝 Negociar: exigir 30% de empleo local, evaluación ambiental y 10% de regalías para comunidades.", efectos:{ipc:-1,deuda:-1,reservas:5,riesgo:-4,pobreza:-2,desocupacion:-3,produccion:5,confianza:7} },
+      { texto:"🌿 Rechazar la oferta: proteger los humedales y consultar previamente a las comunidades indígenas.", efectos:{ipc:0,deuda:0,reservas:-2,riesgo:3,pobreza:0,desocupacion:1,produccion:-1,confianza:3} },
+    ]
+  },
+  {
+    id:12, tag:"📈 Inflación",
+    titulo:"Espiral Inflacionaria: 14% Mensual",
+    descripcion:"El INDEC publica el dato del mes: inflación mensual del 14,2% —equivalente a 170% anual—. Los precios de los alimentos básicos suben al doble del promedio. Los comerciantes cambian los precios tres veces por semana. El salario real cayó un 35% en los últimos 12 meses. Los jubilados no llegan a fin de mes y hacen cola en los comedores públicos. Tu equipo económico está profundamente dividido sobre cómo cortar esta espiral.",
+    imagen:"https://picsum.photos/seed/inflation-spiral-12/800/360",
+    opciones:[
+      { texto:"🔒 Plan de estabilización de shock: anclar el tipo de cambio y congelar precios 6 meses.", efectos:{ipc:-15,deuda:2,reservas:-8,riesgo:-5,pobreza:-4,desocupacion:3,produccion:-3,confianza:8} },
+      { texto:"📉 Plan gradualista: bajar el déficit fiscal 1% mensual y liberar gradualmente el tipo de cambio.", efectos:{ipc:-5,deuda:-1,reservas:-3,riesgo:-3,pobreza:1,desocupacion:1,produccion:-1,confianza:2} },
+      { texto:"💵 Dolarización de facto: fijar todas las transacciones al dólar libre eliminando el peso.", efectos:{ipc:-20,deuda:-2,reservas:-20,riesgo:-10,pobreza:8,desocupacion:6,produccion:-5,confianza:-5} },
+    ]
+  },
+  {
+    id:13, tag:"🚌 Transporte",
+    titulo:"Paro General de Transporte Público",
+    descripcion:"La Unión de Conductores de Transporte Automotor declara paro por 72 horas tras el fracaso de las negociaciones salariales. La capital queda paralizada. Más de 3 millones de trabajadores no pueden llegar a sus empleos. Las pérdidas económicas por jornada se estiman en $150.000 millones. Los supermercados agotan sus stocks de emergencia. Los hospitales reportan dificultades para el ingreso de personal de guardia. El caos urbano escala hora a hora.",
+    imagen:"https://picsum.photos/seed/transport-strike-13/800/360",
+    opciones:[
+      { texto:"💰 Otorgar el aumento salarial completo: resolver el conflicto de inmediato y volver a la normalidad.", efectos:{ipc:3,deuda:2,reservas:-1,riesgo:-2,pobreza:-2,desocupacion:-1,produccion:2,confianza:7} },
+      { texto:"⚖️ Mediar mediante el Ministerio de Trabajo con acuerdo intermedio del 60% de lo pedido.", efectos:{ipc:1,deuda:1,reservas:0,riesgo:-1,pobreza:-1,desocupacion:0,produccion:1,confianza:3} },
+      { texto:"🚌 Declarar el transporte servicio esencial e impedir el paro por orden judicial.", efectos:{ipc:0,deuda:0,reservas:0,riesgo:2,pobreza:0,desocupacion:0,produccion:3,confianza:-8} },
+    ]
+  },
+  {
+    id:14, tag:"🌏 Relaciones Exteriores",
+    titulo:"Conflicto por el Agua con País Vecino",
+    descripcion:"El país vecino construye una represa sobre un río compartido que reducirá un 40% el caudal de agua que llega a la región noroeste. Los productores agrícolas de la zona están desesperados. El canciller del vecino niega la competencia de los organismos internacionales. La ICJ podría intervenir, pero el proceso llevaría años. Tu ejército solicita autorización para maniobras de 'disuasión' en la frontera. El futuro hídrico de una región entera está en juego.",
+    imagen:"https://picsum.photos/seed/border-water-14/800/360",
+    opciones:[
+      { texto:"⚖️ Llevar el caso a organismos internacionales: OEA, ICJ y ONU como árbitros legítimos.", efectos:{ipc:0,deuda:1,reservas:-1,riesgo:-3,pobreza:0,desocupacion:0,produccion:-1,confianza:5} },
+      { texto:"🤝 Negociación bilateral directa: ofrecer compensaciones económicas a cambio del agua garantizada.", efectos:{ipc:0,deuda:2,reservas:-2,riesgo:-5,pobreza:0,desocupacion:0,produccion:0,confianza:4} },
+      { texto:"🪖 Autorizar maniobras militares de disuasión en la zona fronteriza.", efectos:{ipc:1,deuda:2,reservas:-3,riesgo:8,pobreza:0,desocupacion:0,produccion:-1,confianza:-3} },
+    ]
+  },
+  {
+    id:15, tag:"👴 Seguridad Social",
+    titulo:"Bomba de Tiempo Previsional",
+    descripcion:"El sistema jubilatorio enfrenta un déficit que consume el 10% del PBI. Con una población envejecida, los actuarios proyectan que en 3 años el sistema será insostenible. El ministro de Economía propone elevar la edad jubilatoria a 67 años, reducir los beneficios diferenciales y crear cuentas de capitalización individual. Los jubilados, sindicatos y movimientos sociales organizan protestas multitudinarias. La bomba previsional explota políticamente.",
+    imagen:"https://picsum.photos/seed/pension-reform-15/800/360",
+    opciones:[
+      { texto:"⚖️ Reforma moderada: elevar la edad a 65 años y crear un fondo de sustentabilidad con Ganancias.", efectos:{ipc:-1,deuda:-4,reservas:2,riesgo:-5,pobreza:2,desocupacion:0,produccion:1,confianza:-5} },
+      { texto:"🏦 Reforma estructural: privatización parcial con cuentas individuales de capitalización.", efectos:{ipc:0,deuda:-7,reservas:3,riesgo:-8,pobreza:5,desocupacion:0,produccion:2,confianza:-12} },
+      { texto:"🔴 No reformar: inyección fiscal para sostener el sistema actual por 4 años más.", efectos:{ipc:5,deuda:6,reservas:-4,riesgo:4,pobreza:-3,desocupacion:0,produccion:0,confianza:6} },
+    ]
+  },
+  {
+    id:16, tag:"💊 Salud",
+    titulo:"Desabastecimiento de Medicamentos Esenciales",
+    descripcion:"Las farmacias de todo el país reportan faltante de 120 medicamentos esenciales de la lista del Formulario Terapéutico Nacional: insulina, quimioterápicos y antihipertensivos. El problema es triple: falta de divisas para importar, precios desactualizados que desincentivan la producción local y demoras en aprobación de genéricos. Pacientes crónicos están sin medicación. La emergencia silenciosa escala en número de afectados día a día.",
+    imagen:"https://picsum.photos/seed/medicine-shortage-16/800/360",
+    opciones:[
+      { texto:"🏥 Importación de emergencia estatal: el gobierno compra directamente en el exterior para los más críticos.", efectos:{ipc:1,deuda:2,reservas:-5,riesgo:0,pobreza:-5,desocupacion:0,produccion:0,confianza:10} },
+      { texto:"🏭 Subsidiar la producción pública de medicamentos en laboratorios estatales y universitarios.", efectos:{ipc:1,deuda:3,reservas:-2,riesgo:-1,pobreza:-4,desocupacion:-3,produccion:3,confianza:8} },
+      { texto:"📋 Liberalizar precios de medicamentos para incentivar que el mercado resuelva el desabasto.", efectos:{ipc:5,deuda:0,reservas:0,riesgo:-1,pobreza:3,desocupacion:0,produccion:2,confianza:-5} },
+    ]
+  },
+  {
+    id:17, tag:"💡 Economía del Conocimiento",
+    titulo:"Boom de Startups y Tecnología",
+    descripcion:"El país se posiciona como hub tecnológico regional: 400 startups nuevas en el último año, unicornios en fintech y agtech, y exportaciones de servicios informáticos que ya generan USD 3.000 millones anuales. El sector pide incentivos especiales, financiamiento estatal de I+D y visa para talentos internacionales. Los sindicatos advierten que el trabajo de plataformas precariza el empleo. Tenés una oportunidad histórica para dar el salto tecnológico.",
+    imagen:"https://picsum.photos/seed/startup-tech-17/800/360",
+    opciones:[
+      { texto:"🚀 Ley de Economía del Conocimiento: incentivos fiscales, financiamiento de I+D y visas para talentos.", efectos:{ipc:-1,deuda:-1,reservas:4,riesgo:-5,pobreza:-3,desocupacion:-4,produccion:7,confianza:8} },
+      { texto:"⚖️ Apoyo condicionado: beneficios solo si las empresas garantizan derechos laborales plenos.", efectos:{ipc:0,deuda:0,reservas:2,riesgo:-3,pobreza:-2,desocupacion:-2,produccion:4,confianza:5} },
+      { texto:"🚫 Priorizar la industria tradicional: los beneficios al software benefician solo a las élites.", efectos:{ipc:0,deuda:0,reservas:-1,riesgo:2,pobreza:0,desocupacion:0,produccion:1,confianza:-2} },
+    ]
+  },
+  {
+    id:18, tag:"🏭 Industria",
+    titulo:"Guerra Comercial: Proteccionismo vs. Libre Comercio",
+    descripcion:"Los grandes sindicatos de la industria automotriz, del acero y del aluminio amenazan con paralizar plantas si el gobierno no impone barreras a las importaciones que compiten con la producción nacional. Las empresas argumentan que no pueden competir con la subvaluación de monedas extranjeras. Los exportadores de commodities advierten que las trabas generarán represalias comerciales. El dilema entre proteccionismo y libre comercio es el debate económico central.",
+    imagen:"https://picsum.photos/seed/industry-trade-18/800/360",
+    opciones:[
+      { texto:"🛡️ Aranceles y licencias no automáticas a importaciones de manufacturas industriales.", efectos:{ipc:4,deuda:0,reservas:-1,riesgo:3,pobreza:-2,desocupacion:-4,produccion:6,confianza:5} },
+      { texto:"🤝 Negociar acuerdos de reciprocidad comercial con países de la región.", efectos:{ipc:1,deuda:0,reservas:1,riesgo:-1,pobreza:-1,desocupacion:-2,produccion:3,confianza:4} },
+      { texto:"🌐 Apertura comercial: la competencia baja precios para los consumidores y mejora la eficiencia.", efectos:{ipc:-3,deuda:0,reservas:2,riesgo:-3,pobreza:2,desocupacion:3,produccion:-4,confianza:-3} },
+    ]
+  },
+  {
+    id:19, tag:"🌊 Desastre Natural",
+    titulo:"Inundaciones Devastadoras en el Litoral",
+    descripcion:"Lluvias extraordinarias durante 15 días seguidos provocan las inundaciones más graves en 80 años. Más de 200.000 personas deben evacuar sus hogares en la región litoral. Puentes y rutas cortadas aislan ciudades enteras. Las pérdidas en el sector agropecuario superan los USD 2.000 millones. El Estado nacional enfrenta un pedido urgente de asistencia que pone a prueba su capacidad de respuesta y su solidaridad federal.",
+    imagen:"https://picsum.photos/seed/flooding-litoral-19/800/360",
+    opciones:[
+      { texto:"🚨 Emergencia nacional: desplegar fuerzas armadas, gendarmería y asistencia integral del Estado.", efectos:{ipc:2,deuda:4,reservas:-3,riesgo:-1,pobreza:-4,desocupacion:-2,produccion:-2,confianza:13} },
+      { texto:"🤝 Asistencia coordinada con ONGs, Cruz Roja y municipios: respuesta descentralizada y ágil.", efectos:{ipc:1,deuda:1,reservas:-1,riesgo:0,pobreza:-2,desocupacion:-1,produccion:-1,confianza:8} },
+      { texto:"📋 Declarar zona de desastre y delegar completamente a las provincias sin asistencia fiscal.", efectos:{ipc:0,deuda:0,reservas:0,riesgo:2,pobreza:3,desocupacion:0,produccion:-2,confianza:-7} },
+    ]
+  },
+  {
+    id:20, tag:"🏢 Estado",
+    titulo:"Privatización de Empresas Públicas",
+    descripcion:"Think-tanks económicos y el FMI presionan para privatizar las empresas estatales deficitarias: la aerolínea de bandera (pérdidas de $80.000M/año), la empresa ferroviaria obsoleta y los astilleros nacionales. Los trabajadores de esas empresas, con tradición sindical centenaria, ocupan las instalaciones preventivamente. La oposición sostiene que privatizar en este contexto es 'soldar el barco mientras se hunde'. El rol del Estado en la economía se pone en debate abierto.",
+    imagen:"https://picsum.photos/seed/privatization-20/800/360",
+    opciones:[
+      { texto:"🏢 Privatización total: vender todas las empresas deficitarias al mejor postor internacional.", efectos:{ipc:-2,deuda:-6,reservas:4,riesgo:-7,pobreza:4,desocupacion:7,produccion:2,confianza:-8} },
+      { texto:"🤝 PPP: asociar al Estado con privados manteniendo el 51% de las acciones estratégicas.", efectos:{ipc:-1,deuda:-2,reservas:2,riesgo:-4,pobreza:1,desocupacion:1,produccion:3,confianza:1} },
+      { texto:"🏭 Reconversión con inversión pública: modernizar las empresas sin privatizar ni despedir.", efectos:{ipc:1,deuda:4,reservas:-2,riesgo:2,pobreza:-1,desocupacion:-3,produccion:5,confianza:5} },
+      { texto:"🚫 No tocar nada: sostener las empresas públicas como fuente de empleo y soberanía estatal.", efectos:{ipc:3,deuda:5,reservas:-2,riesgo:3,pobreza:-2,desocupacion:-4,produccion:-1,confianza:4} },
+    ]
+  },
+  {
+    id:21, tag:"🏦 Tensión con FMI",
+    titulo:"Incumplimiento de Metas Fiscales",
+    descripcion:"El Ministerio de Economía informa que el déficit fiscal del trimestre superó en un 40% la meta acordada con el FMI. El directorio del Fondo evaluará si continuar con los desembolsos del programa Stand-By. Si se cortan, las reservas caerían a niveles críticos en semanas. La misión técnica del FMI llega en 72 horas. Tenés que preparar una respuesta que convenza a los acreedores sin destruir el tejido social que sostiene la gobernabilidad.",
+    imagen:"https://picsum.photos/seed/fmi-targets-21/800/360",
+    opciones:[
+      { texto:"✂️ Ajuste de emergencia: recortar gastos en educación y salud para cumplir la meta inmediatamente.", efectos:{ipc:-3,deuda:-2,reservas:3,riesgo:-10,pobreza:6,desocupacion:3,produccion:-2,confianza:-10} },
+      { texto:"📊 Presentar un plan alternativo de cumplimiento gradual con plazos extendidos.", efectos:{ipc:-1,deuda:-1,reservas:1,riesgo:-4,pobreza:1,desocupacion:0,produccion:0,confianza:-2} },
+      { texto:"🚀 Buscar financiamiento alternativo en China, Rusia o países del Golfo Pérsico.", efectos:{ipc:2,deuda:5,reservas:7,riesgo:3,pobreza:-1,desocupacion:0,produccion:1,confianza:2} },
+    ]
+  },
+  {
+    id:22, tag:"🔴 Corrupción",
+    titulo:"Espionaje Ilegal a Periodistas y Opositores",
+    descripcion:"El diario de mayor circulación revela que la Agencia Federal de Inteligencia (AFI), bajo órdenes directas de tu gobierno, intervino ilegalmente los teléfonos de 40 periodistas de investigación, 12 dirigentes opositores y 3 jueces. Los audios filtrados son devastadores. La Fiscalía abre investigación penal. El escándalo recorre el mundo. La libertad de prensa y el Estado de Derecho están en el centro del debate. Tu credibilidad democrática está en juego.",
+    imagen:"https://picsum.photos/seed/espionage-22/800/360",
+    opciones:[
+      { texto:"⚖️ Intervenir la AFI, colaborar con la Justicia y pedir disculpas públicas genuinas.", efectos:{ipc:0,deuda:0,reservas:0,riesgo:-4,pobreza:0,desocupacion:0,produccion:0,confianza:10} },
+      { texto:"🔇 Calificar las revelaciones de 'montaje mediático' sin tomar ninguna medida.", corrupta:true, efectos:{ipc:0,deuda:0,reservas:0,riesgo:5,pobreza:0,desocupacion:0,produccion:0,confianza:-16} },
+      { texto:"👤 Despedir al director de la AFI como chivo expiatorio sin asumir responsabilidades institucionales.", efectos:{ipc:0,deuda:0,reservas:0,riesgo:1,pobreza:0,desocupacion:0,produccion:0,confianza:-4} },
+    ]
+  },
+  {
+    id:23, tag:"🎓 Educación",
+    titulo:"Crisis Presupuestaria Universitaria",
+    descripcion:"Las 57 universidades nacionales informan que sus partidas presupuestarias perdieron el 47% de su valor real por la inflación. Los rectorados advierten que no podrán pagar los servicios básicos a partir del mes próximo. Miles de docentes e investigadores planean emigrar al exterior. El movimiento estudiantil convoca a una marcha universitaria que se perfila como la más grande desde el retorno de la democracia. La noche de los bastones largos es el fantasma que recorre los campus.",
+    imagen:"https://picsum.photos/seed/university-23/800/360",
+    opciones:[
+      { texto:"📚 Actualizar los presupuestos universitarios al 100% de la inflación del período.", efectos:{ipc:1,deuda:3,reservas:-1,riesgo:-2,pobreza:-2,desocupacion:-3,produccion:2,confianza:12} },
+      { texto:"⚖️ Aumento parcial del 60% con auditoría de eficiencia universitaria como condición.", efectos:{ipc:1,deuda:1,reservas:0,riesgo:-1,pobreza:-1,desocupacion:-1,produccion:1,confianza:5} },
+      { texto:"🚫 Mantener el presupuesto actual: el ajuste es necesario también en las universidades.", efectos:{ipc:0,deuda:-1,reservas:0,riesgo:2,pobreza:1,desocupacion:2,produccion:-1,confianza:-14} },
+    ]
+  },
+  {
+    id:24, tag:"🌾 Agroexportaciones",
+    titulo:"Cosecha Récord: El Campo No Liquida",
+    descripcion:"La Bolsa de Cereales proyecta la cosecha más grande en 40 años: 140 millones de toneladas con precios internacionales en máximos históricos. El campo podría liquidar USD 25.000 millones en divisas. Sin embargo, los productores retienen la soja a la espera de una baja de retenciones. El Banco Central necesita esas divisas desesperadamente para sostener el tipo de cambio. La tensión entre el campo y el Estado llega a su punto máximo histórico.",
+    imagen:"https://picsum.photos/seed/harvest-soja-24/800/360",
+    opciones:[
+      { texto:"💱 'Dólar soja': tipo de cambio diferencial y temporario para incentivar las liquidaciones.", efectos:{ipc:4,deuda:-2,reservas:12,riesgo:-6,pobreza:-1,desocupacion:-2,produccion:5,confianza:2} },
+      { texto:"📉 Bajar las retenciones a las exportaciones 5 puntos de manera permanente.", efectos:{ipc:1,deuda:-1,reservas:9,riesgo:-5,pobreza:-1,desocupacion:-1,produccion:4,confianza:3} },
+      { texto:"🔒 No ceder: sostener las retenciones y esperar que el mercado liquide naturalmente.", efectos:{ipc:2,deuda:0,reservas:2,riesgo:3,pobreza:0,desocupacion:0,produccion:2,confianza:0} },
+    ]
+  },
+  {
+    id:25, tag:"💻 Ciberseguridad",
+    titulo:"Ciberataque a la Infraestructura del Estado",
+    descripcion:"Un sofisticado ataque de ransomware paraliza los sistemas informáticos del Banco Central, el ANSES, el Registro Nacional y los hospitales públicos. Los datos de 30 millones de ciudadanos están en riesgo. Los atacantes exigen USD 50 millones en criptomonedas. El acceso a pensiones, salarios estatales y prestaciones sociales está bloqueado. La inteligencia cibernética del Estado es insuficiente y el tiempo corre en contra.",
+    imagen:"https://picsum.photos/seed/cyberattack-25/800/360",
+    opciones:[
+      { texto:"💻 No pagar: contratar empresa internacional de ciberseguridad para recuperar los sistemas.", efectos:{ipc:0,deuda:2,reservas:-3,riesgo:3,pobreza:2,desocupacion:0,produccion:-3,confianza:-4} },
+      { texto:"💰 Pagar el rescate: recuperar los sistemas en 48 horas y minimizar el daño ciudadano.", efectos:{ipc:0,deuda:1,reservas:-2,riesgo:5,pobreza:0,desocupacion:0,produccion:0,confianza:-7} },
+      { texto:"🛡️ Crear la Agencia Nacional de Ciberseguridad: inversión en soberanía digital a largo plazo.", efectos:{ipc:0,deuda:3,reservas:-4,riesgo:-2,pobreza:0,desocupacion:-2,produccion:2,confianza:6} },
+    ]
+  },
+  {
+    id:26, tag:"💱 Debate Monetario",
+    titulo:"Propuesta de Dolarización Total",
+    descripcion:"Un bloque opositor presenta un proyecto de ley para dolarizar completamente la economía: eliminar el peso, adoptar el dólar y disolver el Banco Central. La propuesta tiene apoyo del 60% de la ciudadanía harta de la inflación crónica. Economistas de renombre mundial están profundamente divididos. Los expertos que se oponen advierten sobre la pérdida del instrumento monetario en caso de shocks externos. Es el debate económico más profundo de tu gestión.",
+    imagen:"https://picsum.photos/seed/dollarization-26/800/360",
+    opciones:[
+      { texto:"💵 Apoyar la dolarización completa: responder al mandato ciudadano y a la necesidad histórica.", efectos:{ipc:-18,deuda:-3,reservas:-22,riesgo:-12,pobreza:7,desocupacion:8,produccion:-5,confianza:5} },
+      { texto:"🏦 Bimonetarismo controlado: permitir que el dólar y el peso convivan legalmente.", efectos:{ipc:-8,deuda:0,reservas:-5,riesgo:-6,pobreza:2,desocupacion:2,produccion:0,confianza:3} },
+      { texto:"🚫 Rechazar la dolarización: defender la soberanía monetaria y el Banco Central.", efectos:{ipc:2,deuda:0,reservas:2,riesgo:4,pobreza:0,desocupacion:0,produccion:1,confianza:-4} },
+      { texto:"📊 Convocar un referéndum ciudadano sobre el tema en 6 meses.", efectos:{ipc:1,deuda:0,reservas:0,riesgo:2,pobreza:0,desocupacion:0,produccion:0,confianza:6} },
+    ]
+  },
+  {
+    id:27, tag:"⚖️ Derechos Humanos",
+    titulo:"Oleada de Femicidios: El País Dice Basta",
+    descripcion:"Una oleada de 45 femicidios en un mes y el asesinato de una joven activista de derechos humanos desatan la movilización más grande en años. El Ni Una Menos convoca marchas en 200 ciudades del país. La Justicia y la Fiscalía piden más recursos. Los movimientos sociales exigen una Ley de Emergencia en Violencia de Género con presupuesto garantizado. El Ministerio de la Mujer tiene fondos para apenas el 15% de los centros de atención necesarios.",
+    imagen:"https://picsum.photos/seed/rights-gender-27/800/360",
+    opciones:[
+      { texto:"💜 Ley de Emergencia: triplicar el presupuesto del Ministerio de la Mujer y crear 200 refugios.", efectos:{ipc:0,deuda:2,reservas:-1,riesgo:-2,pobreza:-3,desocupacion:-1,produccion:0,confianza:13} },
+      { texto:"⚖️ Reforzar el sistema judicial: más fiscales, juzgados especializados y programas de protección.", efectos:{ipc:0,deuda:1,reservas:0,riesgo:-1,pobreza:-2,desocupacion:-1,produccion:0,confianza:8} },
+      { texto:"📋 Comprometerse a revisar la legislación pero sin fondos adicionales inmediatos.", efectos:{ipc:0,deuda:0,reservas:0,riesgo:1,pobreza:0,desocupacion:0,produccion:0,confianza:-8} },
+    ]
+  },
+  {
+    id:28, tag:"🏦 Sistema Financiero",
+    titulo:"Corrida Bancaria: El Sistema Tambalea",
+    descripcion:"Un banco de tamaño mediano quiebra de forma imprevista tras revelarse irregularidades contables. El pánico se extiende: en 48 horas, los depositantes retiran $800.000 millones del sistema. Los bancos más pequeños son los más vulnerables. El Banco Central tiene reservas insuficientes para cubrir todos los depósitos. El fantasma del corralito del 2001 se cierne sobre el país. Cada hora sin respuesta agrava el pánico.",
+    imagen:"https://picsum.photos/seed/bank-run-28/800/360",
+    opciones:[
+      { texto:"🔒 Garantizar todos los depósitos con respaldo del Tesoro: salvar el sistema bancario completo.", efectos:{ipc:5,deuda:8,reservas:-10,riesgo:-8,pobreza:-2,desocupacion:0,produccion:-1,confianza:9} },
+      { texto:"🏦 Rescate selectivo: solo garantizar pequeños ahorristas hasta $10 millones.", efectos:{ipc:3,deuda:4,reservas:-5,riesgo:-3,pobreza:-1,desocupacion:0,produccion:-2,confianza:4} },
+      { texto:"🌍 Solicitar prestamista de última instancia al FMI o Bancos de Desarrollo Regionales.", efectos:{ipc:1,deuda:6,reservas:5,riesgo:-5,pobreza:0,desocupacion:0,produccion:0,confianza:2} },
+    ]
+  },
+  {
+    id:29, tag:"🏥 Crisis Sanitaria Social",
+    titulo:"Emergencia en los Barrios Populares",
+    descripcion:"Un brote de leptospirosis y síndrome urémico en asentamientos periféricos revela la gravedad de la crisis sanitaria-habitacional. El 40% de los barrios populares no tiene agua potable ni cloacas. La mortalidad infantil en estas zonas triplica la media nacional. Los hospitales del conurbano están al 150% de capacidad. Médicos comunitarios llevan meses alertando sobre esta situación sin respuesta del Estado. Las imágenes dan vuelta al mundo.",
+    imagen:"https://picsum.photos/seed/slum-health-29/800/360",
+    opciones:[
+      { texto:"🏗️ Plan Nacional de Urbanización: agua potable, cloacas y viviendas en 18 meses.", efectos:{ipc:1,deuda:5,reservas:-3,riesgo:-2,pobreza:-8,desocupacion:-5,produccion:3,confianza:11} },
+      { texto:"🏥 Reforzar la atención primaria: médicos comunitarios en cada barrio del país.", efectos:{ipc:0,deuda:2,reservas:-1,riesgo:-1,pobreza:-4,desocupacion:-2,produccion:0,confianza:7} },
+      { texto:"📋 Diagnóstico y plan a largo plazo: crear un comité de expertos para diseñar políticas en 2 años.", efectos:{ipc:0,deuda:0,reservas:0,riesgo:2,pobreza:2,desocupacion:0,produccion:0,confianza:-6} },
+    ]
+  },
+  {
+    id:30, tag:"🏠 Vivienda",
+    titulo:"Colapso del Mercado de Alquileres",
+    descripcion:"El mercado inmobiliario colapsó: hay 60% menos oferta de alquileres que hace 3 años, los precios aumentan un 180% anual y las desalojaciones forzosas se multiplican. Familias con hijos viven en autos y plazas. Los propietarios retiran inmuebles del mercado y los convierten en alquileres turísticos en dólares. El debate entre derechos de inquilinos y derechos de propiedad divide a la sociedad y al Congreso.",
+    imagen:"https://picsum.photos/seed/housing-crisis-30/800/360",
+    opciones:[
+      { texto:"⚖️ Ley de Alquileres pro-inquilino: contratos a 3 años con actualización por CER.", efectos:{ipc:-1,deuda:1,reservas:0,riesgo:1,pobreza:-4,desocupacion:0,produccion:-1,confianza:8} },
+      { texto:"🏗️ Plan Nacional de Vivienda Pública: construir 200.000 unidades habitacionales en 2 años.", efectos:{ipc:2,deuda:5,reservas:-3,riesgo:-1,pobreza:-6,desocupacion:-7,produccion:5,confianza:10} },
+      { texto:"🏢 Incentivos al mercado: desgravaciones impositivas a propietarios que alquilen a largo plazo.", efectos:{ipc:0,deuda:-1,reservas:0,riesgo:-2,pobreza:-2,desocupacion:0,produccion:0,confianza:2} },
+    ]
+  },
+  {
+    id:31, tag:"⛽ Recursos Naturales",
+    titulo:"Descubrimiento de Petróleo Offshore Patagónico",
+    descripcion:"YPF y una empresa noruega confirman el hallazgo de un yacimiento offshore de clase mundial frente a las costas patagónicas: reservas estimadas en 4.000 millones de barriles. La explotación podría generar USD 20.000 millones anuales en 10 años. Los ambientalistas advierten sobre el riesgo de un derrame que destruiría los ecosistemas marinos únicos de la Patagonia. Las comunidades costeras están divididas. El petróleo puede ser maldición o milagro.",
+    imagen:"https://picsum.photos/seed/offshore-oil-31/800/360",
+    opciones:[
+      { texto:"🛢️ Explotar el yacimiento a máxima velocidad: el país necesita las divisas urgentemente.", efectos:{ipc:-2,deuda:-8,reservas:12,riesgo:-10,pobreza:-5,desocupacion:-5,produccion:10,confianza:6} },
+      { texto:"🌿 Explotar con Evaluación de Impacto Ambiental rigurosa y ritmo moderado y sostenido.", efectos:{ipc:-1,deuda:-4,reservas:6,riesgo:-5,pobreza:-2,desocupacion:-3,produccion:5,confianza:8} },
+      { texto:"🚫 Declarar el área Reserva Marina: preservar el ecosistema para las generaciones futuras.", efectos:{ipc:0,deuda:0,reservas:-2,riesgo:3,pobreza:0,desocupacion:0,produccion:-1,confianza:5} },
+    ]
+  },
+  {
+    id:32, tag:"🌐 Soberanía Sanitaria",
+    titulo:"Multinacional Farmacéutica Demanda al Estado",
+    descripcion:"Una multinacional farmacéutica amenaza con demandar al Estado ante el CIADI por USD 4.000 millones alegando que una ley de producción local de medicamentos viola sus derechos de propiedad intelectual. El medicamento afecta a 200.000 pacientes crónicos. Perder el juicio implicaría una deuda impagable. Los TLCs firmados hace 20 años están en el centro del debate. ¿Cómo defendés la soberanía sanitaria del país?",
+    imagen:"https://picsum.photos/seed/pharma-32/800/360",
+    opciones:[
+      { texto:"⚖️ Litigar en el CIADI con los mejores abogados internacionales especializados.", efectos:{ipc:0,deuda:2,reservas:-2,riesgo:2,pobreza:-3,desocupacion:0,produccion:0,confianza:6} },
+      { texto:"🤝 Negociar un acuerdo extrajudicial: compensación módica a cambio de mantener la ley vigente.", efectos:{ipc:0,deuda:3,reservas:-3,riesgo:-2,pobreza:-3,desocupacion:0,produccion:0,confianza:4} },
+      { texto:"🚀 Derogar la ley: ceder ante la multinacional para evitar el costoso juicio internacional.", efectos:{ipc:3,deuda:0,reservas:0,riesgo:-4,pobreza:5,desocupacion:0,produccion:0,confianza:-9} },
+    ]
+  },
+  {
+    id:33, tag:"🎓 Reforma Educativa",
+    titulo:"Debate por el Nuevo Currículum Escolar",
+    descripcion:"Tu Ministro de Educación propone incorporar pensamiento computacional, educación financiera y sexualidad integral (ESI) como materias obligatorias en la secundaria, eliminando Historia del Arte y Filosofía de cuarto y quinto año. Los docentes de esas materias amenazan con huelga. La Iglesia Católica rechaza la ESI obligatoria. Los tecnólogos y empresarios aplauden. El debate sobre qué tipo de ciudadanos queremos formar toca fibras profundas de la identidad cultural.",
+    imagen:"https://picsum.photos/seed/edu-reform-33/800/360",
+    opciones:[
+      { texto:"💻 Reforma completa: nuevas materias obligatorias incluyendo ESI sin excepciones.", efectos:{ipc:0,deuda:2,reservas:-1,riesgo:-2,pobreza:-2,desocupacion:-1,produccion:2,confianza:5} },
+      { texto:"⚖️ Reforma parcial: agregar las nuevas materias sin eliminar las humanísticas clásicas.", efectos:{ipc:0,deuda:3,reservas:-1,riesgo:-1,pobreza:-1,desocupacion:-1,produccion:1,confianza:6} },
+      { texto:"🚫 Suspender la reforma: el conflicto docente y eclesial es políticamente insostenible.", efectos:{ipc:0,deuda:0,reservas:0,riesgo:0,pobreza:0,desocupacion:0,produccion:0,confianza:-3} },
+    ]
+  },
+  {
+    id:34, tag:"🌍 Migración",
+    titulo:"Crisis de Refugiados en la Frontera",
+    descripcion:"Una crisis política en un país vecino genera un flujo masivo de 400.000 refugiados en 6 meses. Los servicios de salud, vivienda y educación de las ciudades fronterizas están al límite. Los sindicatos advierten sobre presión en el mercado laboral informal. Algunos sectores empresariales celebran la llegada de fuerza de trabajo calificada. Las organizaciones de DDHH exigen integración plena. La xenofobia crece en redes sociales y la opinión pública está dividida.",
+    imagen:"https://picsum.photos/seed/refugees-34/800/360",
+    opciones:[
+      { texto:"🤝 Programa de integración: documentación rápida, empleo formal y acceso pleno a servicios.", efectos:{ipc:1,deuda:3,reservas:-2,riesgo:-2,pobreza:-2,desocupacion:2,produccion:3,confianza:7} },
+      { texto:"🏕️ Campos de refugiados: asistencia humanitaria controlada en zonas delimitadas.", efectos:{ipc:0,deuda:2,reservas:-1,riesgo:0,pobreza:0,desocupacion:0,produccion:0,confianza:0} },
+      { texto:"🚫 Cierre de fronteras: deportar a quienes no acrediten peligro real e inminente.", efectos:{ipc:0,deuda:0,reservas:0,riesgo:4,pobreza:0,desocupacion:0,produccion:-1,confianza:-6} },
+    ]
+  },
+  {
+    id:35, tag:"⚡ Crisis de Gas",
+    titulo:"Corte de Suministro de Gas Importado",
+    descripcion:"El principal proveedor de gas natural licuado suspende los envíos alegando incumplimientos de pago por USD 600 millones. La interrupción ocurre en pleno invierno con temperaturas de -5°C. Las industrias deben bajar su producción al 50%. Los hogares del sur del país enfrentan cortes de calefacción. El Ministerio de Energía calcula que el sistema podría colapsar completamente en 10 días si no se consigue un proveedor alternativo.",
+    imagen:"https://picsum.photos/seed/gas-shortage-35/800/360",
+    opciones:[
+      { texto:"💰 Pagar la deuda con el proveedor y reanudar el suministro de inmediato antes del colapso.", efectos:{ipc:2,deuda:2,reservas:-8,riesgo:-4,pobreza:0,desocupacion:0,produccion:4,confianza:5} },
+      { texto:"🌍 Buscar proveedores alternativos de emergencia en el mercado spot internacional.", efectos:{ipc:4,deuda:3,reservas:-10,riesgo:0,pobreza:1,desocupacion:0,produccion:3,confianza:2} },
+      { texto:"🕯️ Plan de racionamiento: cortes rotativos programados para distribuir el gas disponible.", efectos:{ipc:2,deuda:0,reservas:-2,riesgo:3,pobreza:3,desocupacion:1,produccion:-4,confianza:-6} },
+    ]
+  },
+  {
+    id:36, tag:"🔴 Corrupción",
+    titulo:"Licitación Vial Manipulada: Tu Propio Entorno",
+    descripcion:"La Oficina Anticorrupción detecta que la licitación de la nueva autopista norte-sur fue manipulada: el pliego técnico fue diseñado a medida de una empresa constructora vinculada a un empresario cercano al poder. La sobrevaluación es del 80% y el anticipo ya fue abonado. El titular de la Dirección Nacional de Vialidad es tu cuñado. El fiscal federal pide la nulidad del contrato. La corrupción llegó a tu círculo íntimo.",
+    imagen:"https://picsum.photos/seed/corruption-vial-36/800/360",
+    opciones:[
+      { texto:"⚖️ Anular el contrato, remover a tu cuñado y entregar todo a la justicia sin condicionamientos.", efectos:{ipc:0,deuda:-3,reservas:0,riesgo:-6,pobreza:0,desocupacion:0,produccion:-1,confianza:16} },
+      { texto:"🔄 Relicitar la obra bajo condiciones transparentes pero sin investigar el caso anterior.", efectos:{ipc:0,deuda:0,reservas:0,riesgo:-2,pobreza:0,desocupacion:0,produccion:0,confianza:5} },
+      { texto:"🛡️ Defender la licitación como legal y bloquear la investigación judicial.", corrupta:true, efectos:{ipc:0,deuda:2,reservas:0,riesgo:6,pobreza:0,desocupacion:0,produccion:0,confianza:-20} },
+    ]
+  },
+  {
+    id:37, tag:"🏛️ Reforma del Estado",
+    titulo:"¿Cuántos Ministerios Necesita el País?",
+    descripcion:"Tu gabinete debate reducir el número de ministerios de 22 a 12, fusionando áreas y eliminando organismos 'redundantes'. Los empleados públicos organizan paros. La oposición acusa de vaciamiento del Estado. Los economistas ortodoxos aplauden la señal de austeridad. Los heterodoxos advierten que el Estado es el empleador de última instancia y garante de derechos fundamentales. La eficiencia versus el rol social del Estado se debate en cada mesa del país.",
+    imagen:"https://picsum.photos/seed/state-reform-37/800/360",
+    opciones:[
+      { texto:"✂️ Reducción drástica: fusionar ministerios y despedir empleados considerados redundantes.", efectos:{ipc:-2,deuda:-5,reservas:2,riesgo:-6,pobreza:5,desocupacion:4,produccion:1,confianza:-7} },
+      { texto:"⚖️ Reforma gradual: fusionar sin despidos, solo a través de jubilaciones y pases voluntarios.", efectos:{ipc:-1,deuda:-2,reservas:1,riesgo:-3,pobreza:1,desocupacion:1,produccion:0,confianza:-2} },
+      { texto:"🔄 Modernización digital: informatización de trámites sin reducir el personal estatal.", efectos:{ipc:0,deuda:1,reservas:-1,riesgo:-1,pobreza:0,desocupacion:-1,produccion:2,confianza:4} },
+      { texto:"🚫 No reformar: el tamaño del Estado refleja necesidades reales de la población.", efectos:{ipc:1,deuda:1,reservas:0,riesgo:2,pobreza:-1,desocupacion:-1,produccion:0,confianza:3} },
+    ]
+  },
+  {
+    id:38, tag:"⚖️ Seguridad",
+    titulo:"Motín Carcelario: El Sistema Penal Colapsa",
+    descripcion:"Un motín en la cárcel más grande del país deja 18 presos muertos y 60 heridos. Las imágenes del interior revelan celdas con 5 veces su capacidad, infestadas de ratas, sin agua caliente ni atención médica. El Comité contra la Tortura de la ONU emite un informe lapidario. El 65% de los presos están en prisión preventiva sin condena firme. La sociedad debate entre más mano dura y reforma del sistema penal integral.",
+    imagen:"https://picsum.photos/seed/prison-riot-38/800/360",
+    opciones:[
+      { texto:"⚖️ Reforma penal integral: juicio abreviado, tobilleras electrónicas y cárceles abiertas.", efectos:{ipc:0,deuda:2,reservas:-1,riesgo:-3,pobreza:-2,desocupacion:-1,produccion:0,confianza:5} },
+      { texto:"🏗️ Construir nuevas cárceles y ampliar la infraestructura penitenciaria urgentemente.", efectos:{ipc:0,deuda:3,reservas:-2,riesgo:-2,pobreza:0,desocupacion:-3,produccion:1,confianza:3} },
+      { texto:"🔒 Mano dura: reforzar la presencia de fuerzas federales en cárceles, sin reforma de fondo.", efectos:{ipc:0,deuda:1,reservas:0,riesgo:-1,pobreza:0,desocupacion:0,produccion:0,confianza:-2} },
+    ]
+  },
+  {
+    id:39, tag:"🦠 Pandemia",
+    titulo:"Nuevo Brote de Influenza Aviar H5N2",
+    descripcion:"La OMS alerta sobre una nueva variante de influenza aviar H5N2 que ya causó 3.000 muertes en el sudeste asiático. Tu Ministerio de Salud confirma los primeros 12 casos en el aeropuerto internacional. Los epidemiólogos piden cierre de fronteras y cuarentena preventiva. Las cámaras empresariales advierten que el impacto económico de un cierre sería devastador. El fantasma de la pandemia de 2020 está fresco en la memoria colectiva del país.",
+    imagen:"https://picsum.photos/seed/pandemic-new-39/800/360",
+    opciones:[
+      { texto:"🔒 Cierre inmediato de fronteras y cuarentena estricta: la salud sobre todo lo demás.", efectos:{ipc:3,deuda:5,reservas:-4,riesgo:2,pobreza:4,desocupacion:6,produccion:-8,confianza:6} },
+      { texto:"😷 Protocolo de vigilancia intensiva: sin cierre pero con rastreo y testeo masivo sistematizado.", efectos:{ipc:1,deuda:3,reservas:-2,riesgo:0,pobreza:1,desocupacion:1,produccion:-2,confianza:5} },
+      { texto:"📊 No sobreactuar: medidas mínimas de control sin alterar la vida cotidiana ni la economía.", efectos:{ipc:0,deuda:0,reservas:0,riesgo:3,pobreza:3,desocupacion:0,produccion:0,confianza:-4} },
+    ]
+  },
+  {
+    id:40, tag:"🗳️ Elecciones",
+    titulo:"Elecciones Legislativas de Medio Término",
+    descripcion:"Se acercan las elecciones legislativas que renovarán la mitad del Congreso. Tu bloque perdió la mayoría en la primera vuelta y necesita alianzas urgentes. La oposición tiene expectativas de hacerse con el control de ambas cámaras, lo que paralizaría toda tu agenda de gobierno. La campaña está sucia: fake news, acusaciones cruzadas y una sociedad polarizada. Tu jefe de campaña te presenta tres estrategias antes del sprint final.",
+    imagen:"https://picsum.photos/seed/elections-mid-40/800/360",
+    opciones:[
+      { texto:"🤝 Campaña propositiva: proponer agenda legislativa concreta, debates abiertos y propuestas claras.", efectos:{ipc:0,deuda:1,reservas:0,riesgo:-2,pobreza:-1,desocupacion:0,produccion:0,confianza:9} },
+      { texto:"🗞️ Campaña de contraste: mostrar los errores de la oposición sin ofrecer propuestas propias.", efectos:{ipc:0,deuda:0,reservas:0,riesgo:2,pobreza:0,desocupacion:0,produccion:0,confianza:-2} },
+      { texto:"💰 Lanzar planes sociales y obra pública estratégica antes de las elecciones.", corrupta:true, efectos:{ipc:4,deuda:4,reservas:-3,riesgo:2,pobreza:-4,desocupacion:-2,produccion:2,confianza:5} },
+    ]
+  },
+];
+
+/* ============================================================
+   ESTADO DEL JUEGO
+   ============================================================ */
+let G = null; // Estado global del juego
+
+function newState(countryName) {
+  // Crear orden aleatorio de eventos (índices 0–39 mezclados)
+  const order = [...Array(EVENTS.length).keys()];
+  for (let i = order.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  return {
+    countryName: countryName || "Mi País",
+    turn: 0,                          // 0–47
+    indicadores: { ...CONFIG.INITIAL },
+    prevIndicadores: null,            // indicadores del turno anterior
+    eventOrder: order,                // orden aleatorio de eventos
+    history: [],                      // historial de estados
+    adata: {                          // datos para logros
+      ipcNeverHigh: true,
+      confianzaMax: CONFIG.INITIAL.confianza,
+      neverCorrupt: true,
+      crisisCount: 0,
+    },
+    unlocked: [],                     // IDs de logros desbloqueados
+    gameOver: false,
+    gameOverReason: "",
+    won: false,
+    quoteIndex: Math.floor(Math.random() * QUOTES.length),
+  };
+}
+
+/* ============================================================
+   NAVEGACIÓN ENTRE PANTALLAS
+   ============================================================ */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function openManual() { showScreen('screen-manual'); }
+
+/* ============================================================
+   FULLSCREEN
+   ============================================================ */
+function enterFullscreen() {
+  const el = document.documentElement;
+  try {
+    if (el.requestFullscreen) el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    else if (el.msRequestFullscreen) el.msRequestFullscreen();
+  } catch(e) {}
+}
+
+/* ============================================================
+   INICIAR / CARGAR PARTIDA
+   ============================================================ */
+function startGame() {
+  const input = document.getElementById('country-name');
+  const name = input.value.trim();
+  if (!name) {
+    input.classList.add('input-error');
+    input.focus();
+    setTimeout(() => input.classList.remove('input-error'), 1500);
+    return;
+  }
+  G = newState(name);
+  saveToStorage();
+  enterFullscreen();
+  showScreen('screen-game');
+  renderAll();
+}
+
+function loadGame() {
+  const raw = localStorage.getItem('sdr_save');
+  if (!raw) {
+    alert('⚠️ No hay partida guardada. Iniciá una nueva partida primero.');
+    return;
+  }
+  try {
+    G = JSON.parse(raw);
+  } catch(e) {
+    alert('⚠️ El guardado está corrupto. Iniciá una nueva partida.');
+    return;
+  }
+  enterFullscreen();
+  if (G.gameOver) { buildEndScreen(); showScreen('screen-end'); return; }
+  showScreen('screen-game');
+  renderAll();
+}
+
+function saveToStorage() {
+  try { localStorage.setItem('sdr_save', JSON.stringify(G)); } catch(e) {}
+}
+
+function doSave() {
+  saveToStorage();
+  const btn = event.currentTarget;
+  const orig = btn.textContent;
+  btn.textContent = '✅ Guardado';
+  setTimeout(() => btn.textContent = orig, 1500);
+}
+
+function doQuit() {
+  if (confirm('¿Guardár y salir al menú principal?')) {
+    saveToStorage();
+    showScreen('screen-start');
+  }
+}
+
+/* ============================================================
+   RENDER COMPLETO
+   ============================================================ */
+function renderAll() {
+  renderMandate();
+  renderDashboard();
+  renderEvent();
+  renderQuote();
+}
+
+/* ---- Barra de mandato ---- */
+function renderMandate() {
+  const pct = (G.turn / CONFIG.TOTAL_TURNS) * 100;
+  document.getElementById('mandate-fill').style.width = pct + '%';
+  document.getElementById('month-label').textContent = `Mes ${G.turn + 1} / ${CONFIG.TOTAL_TURNS}`;
+  document.getElementById('country-game-label').textContent = `🌐 ${G.countryName} | Turno ${G.turn + 1}`;
+
+  const ym = document.getElementById('year-markers');
+  ym.innerHTML = '';
+  for (let y = 1; y <= 4; y++) {
+    const active = G.turn >= (y - 1) * 12;
+    const d = document.createElement('div');
+    d.className = 'year-marker' + (active ? ' active' : '');
+    d.textContent = `Año ${y}`;
+    ym.appendChild(d);
+  }
+}
+
+/* ---- Dashboard ---- */
+const IND_META = [
+  { key:'ipc',          emoji:'📈', name:'IPC / Inflación',         unit:'%',   reverse:true  },
+  { key:'deuda',        emoji:'💸', name:'Deuda Externa',            unit:'%',   reverse:true  },
+  { key:'reservas',     emoji:'💰', name:'Reservas Internacionales', unit:'pts', reverse:false },
+  { key:'riesgo',       emoji:'⚠️', name:'Riesgo País',              unit:'pts', reverse:true  },
+  { key:'pobreza',      emoji:'📉', name:'Índice de Pobreza',        unit:'%',   reverse:true  },
+  { key:'desocupacion', emoji:'👥', name:'Tasa de Desocupación',     unit:'%',   reverse:true  },
+  { key:'produccion',   emoji:'🏭', name:'Producción Industrial',    unit:'pts', reverse:false },
+  { key:'confianza',    emoji:'🤝', name:'Confianza en el Gobierno', unit:'%',   reverse:false },
+];
+
+function getZone(key, val) {
+  const t = CONFIG.THRESHOLDS[key];
+  if (t.low_bad) {
+    if (val >= t.warn)   return 'safe';
+    if (val >= t.danger) return 'warning';
+    return 'danger';
+  } else {
+    if (val <= t.warn)   return 'safe';
+    if (val <= t.danger) return 'warning';
+    return 'danger';
+  }
+}
+
+function getColor(key, val) {
+  const z = getZone(key, val);
+  return z === 'safe' ? '#27ae60' : z === 'warning' ? '#f39c12' : '#e74c3c';
+}
+
+function renderDashboard() {
+  const wrap = document.getElementById('indicators-wrap');
+  wrap.innerHTML = '';
+
+  IND_META.forEach(m => {
+    const val = Math.round(G.indicadores[m.key]);
+    const zone = getZone(m.key, val);
+    const color = getColor(m.key, val);
+    const barPct = Math.min(100, Math.max(0, val));
+
+    // Tendencia respecto al turno anterior
+    let trendHTML = '';
+    if (G.prevIndicadores) {
+      const prev = Math.round(G.prevIndicadores[m.key]);
+      const diff = val - prev;
+      if (diff !== 0) {
+        // bueno si: reverse=true y diff<0, o reverse=false y diff>0
+        const isGood = (m.reverse && diff < 0) || (!m.reverse && diff > 0);
+        const arrow = diff > 0 ? '▲' : '▼';
+        const sign  = diff > 0 ? '+' : '';
+        trendHTML = `<span style="color:${isGood ? '#5ddd8a' : '#ff7070'}">${arrow} ${sign}${diff}</span>`;
+      } else {
+        trendHTML = `<span style="color:var(--text-dim)">— 0</span>`;
+      }
+    }
+
+    const zoneLabel = zone === 'safe' ? '🟢 Zona segura' : zone === 'warning' ? '🟡 Zona de alerta' : '🔴 ZONA CRÍTICA';
+
+    const card = document.createElement('div');
+    card.className = `ind-card${zone === 'warning' ? ' zone-warning' : zone === 'danger' ? ' zone-danger' : ''}`;
+    card.innerHTML = `
+      <div class="ind-top">
+        <div class="ind-name">${m.emoji} ${m.name}</div>
+        <div class="ind-val" style="color:${color}">${val}${m.unit}</div>
+      </div>
+      <div class="ind-bar-track">
+        <div class="ind-bar-fill" style="width:${barPct}%;background:${color}"></div>
+      </div>
+      <div class="ind-foot">
+        <span style="font-size:.67rem;opacity:.7">${zoneLabel}</span>
+        ${trendHTML}
+      </div>
+    `;
+    wrap.appendChild(card);
+  });
+}
+
+/* ---- Evento ---- */
+function renderEvent() {
+  if (G.turn >= CONFIG.TOTAL_TURNS) { endGame(true); return; }
+
+  // Obtener el evento correspondiente al turno actual
+  const evIdx = G.eventOrder[G.turn % G.eventOrder.length];
+  const ev = EVENTS[evIdx];
+  if (!ev) { endGame(true); return; }
+
+  // Imagen
+  const imgWrap = document.getElementById('ev-img-wrap');
+  imgWrap.innerHTML = `<img class="event-img" src="${ev.imagen}" alt="${ev.titulo}"
+    onerror="this.parentElement.innerHTML='<div class=\\'event-img-placeholder\\'>${ev.tag.split(' ')[0]}</div>'">`;
+
+  document.getElementById('ev-tag').textContent = ev.tag;
+  document.getElementById('ev-title').textContent = ev.titulo;
+  document.getElementById('ev-desc').textContent = ev.descripcion;
+
+  // Opciones
+  const grid = document.getElementById('ev-options');
+  grid.innerHTML = '';
+  const LABELS = ['A', 'B', 'C', 'D'];
+  ev.opciones.forEach((op, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="opt-label">[${LABELS[i]}]</span> ${op.texto}`;
+    btn.addEventListener('click', () => openDecisionModal(ev, op));
+    grid.appendChild(btn);
+  });
+
+  // Animar la tarjeta de evento
+  const card = document.getElementById('event-card');
+  card.classList.remove('animate-in');
+  void card.offsetWidth; // forzar reflow para re-disparar animación
+  card.classList.add('animate-in');
+
+  // Scroll al tope del panel
+  document.getElementById('event-panel').scrollTop = 0;
+}
+
+/* ---- Frase ---- */
+function renderQuote() {
+  const q = QUOTES[G.quoteIndex];
+  document.getElementById('game-footer').innerHTML =
+    `💬 <em>"${q.text}"</em> — <strong>${q.author}</strong>`;
+}
+
+/* ============================================================
+   MODAL DE DECISIÓN
+   ============================================================ */
+const BAD_KEYS = new Set(['ipc','deuda','riesgo','pobreza','desocupacion']);
+
+function openDecisionModal(ev, option) {
+  const IND_LABELS = {
+    ipc:'📈 Inflación', deuda:'💸 Deuda', reservas:'💰 Reservas',
+    riesgo:'⚠️ Riesgo', pobreza:'📉 Pobreza', desocupacion:'👥 Desempleo',
+    produccion:'🏭 Producción', confianza:'🤝 Confianza'
+  };
+
+  document.getElementById('m-icon').textContent = ev.tag.split(' ')[0];
+  document.getElementById('m-title').textContent = '¿Confirmás esta decisión?';
+  document.getElementById('m-body').textContent = option.texto;
+
+  const efList = document.getElementById('m-effects');
+  efList.innerHTML = '';
+
+  Object.entries(option.efectos).forEach(([key, raw]) => {
+    if (raw === 0) return;
+    const val = raw * CONFIG.EFFECT_MULTIPLIER;
+    const realVal = Math.round(val);
+    const isBad   = BAD_KEYS.has(key);
+    const isGood  = isBad ? realVal < 0 : realVal > 0;
+    const chip = document.createElement('span');
+    chip.className = `ef-chip ${isGood ? 'ef-good' : 'ef-bad'}`;
+    chip.textContent = `${IND_LABELS[key]} ${realVal > 0 ? '+' : ''}${realVal}`;
+    efList.appendChild(chip);
+  });
+
+  // Guardar la opción elegida en el botón de confirmación
+  const confirmBtn = document.getElementById('m-confirm-btn');
+  // Remover listener anterior clonando el botón
+  const newBtn = confirmBtn.cloneNode(true);
+  confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
+  newBtn.addEventListener('click', () => applyDecision(ev, option));
+
+  document.getElementById('modal').classList.add('open');
+  playTone(440, 0.12);
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+}
+
+/* ============================================================
+   APLICAR DECISIÓN  ← BUG CORREGIDO AQUÍ
+   La función recibe la opción directamente, sin depender de
+   ninguna variable global que pudiera quedar nula.
+   ============================================================ */
+function applyDecision(ev, option) {
+  closeModal(); // cerrar modal PRIMERO, luego procesar
+
+  const m = CONFIG.EFFECT_MULTIPLIER;
+
+  // Guardar snapshot del estado anterior para la tendencia del dashboard
+  G.prevIndicadores = { ...G.indicadores };
+  G.history.push({ turn: G.turn, snapshot: { ...G.indicadores } });
+
+  // Aplicar efectos
+  Object.entries(option.efectos).forEach(([key, raw]) => {
+    G.indicadores[key] = Math.min(100, Math.max(0, G.indicadores[key] + raw * m));
+  });
+
+  // Actualizar datos de logros
+  if (G.indicadores.ipc > 40)       G.adata.ipcNeverHigh = false;
+  if (G.indicadores.confianza > G.adata.confianzaMax) G.adata.confianzaMax = G.indicadores.confianza;
+  if (option.corrupta)              G.adata.neverCorrupt = false;
+
+  // Contar si algún indicador entró en zona de peligro
+  const hadCrisis = IND_META.some(m2 => getZone(m2.key, G.indicadores[m2.key]) === 'danger');
+  if (hadCrisis) G.adata.crisisCount++;
+
+  // Mostrar notificación de resultado
+  showTurnNotif(option.efectos, m);
+
+  // Avanzar turno
+  G.turn++;
+
+  // Cambiar frase aleatoriamente
+  G.quoteIndex = Math.floor(Math.random() * QUOTES.length);
+
+  // Guardar auto-save
+  saveToStorage();
+
+  // Verificar condiciones de derrota
+  if (G.indicadores.confianza <= CONFIG.DEFEAT_CONFIANZA) {
+    setTimeout(() => triggerCrisis('confianza'), 900);
+    return;
+  }
+  if (G.indicadores.pobreza >= CONFIG.DEFEAT_POBREZA) {
+    setTimeout(() => triggerCrisis('pobreza'), 900);
+    return;
+  }
+
+  // Verificar victoria
+  if (G.turn >= CONFIG.TOTAL_TURNS) {
+    setTimeout(() => { G.won = true; G.gameOver = true; saveToStorage(); buildEndScreen(); showScreen('screen-end'); soundVictory(); }, 900);
+    return;
+  }
+
+  // Verificar y mostrar logros
+  checkAchievements();
+
+  // Renderizar el nuevo turno con un pequeño delay para que la notif sea visible
+  setTimeout(() => {
+    renderMandate();
+    renderDashboard();
+    renderEvent();
+    renderQuote();
+  }, 350);
+}
+
+function showTurnNotif(efectos, m) {
+  let goods = 0, bads = 0;
+  Object.entries(efectos).forEach(([key, raw]) => {
+    if (raw === 0) return;
+    const real = raw * m;
+    if ((BAD_KEYS.has(key) && real < 0) || (!BAD_KEYS.has(key) && real > 0)) goods++;
+    else bads++;
+  });
+
+  const strip = document.getElementById('notif-strip');
+  strip.className = 'notif-strip';
+  if (goods > bads + 1)       { strip.classList.add('ok');  strip.textContent = '✅ ¡Buena decisión! Varios indicadores mejoraron este mes.'; }
+  else if (bads > goods + 1)  { strip.classList.add('bad'); strip.textContent = '⚠️ Decisión difícil. Algunos indicadores empeoraron este mes.'; }
+  else                        { strip.textContent = '📊 Decisión tomada. Los indicadores se han actualizado.'; }
+  strip.style.display = 'block';
+}
+
+/* ============================================================
+   CRISIS / GAME OVER
+   ============================================================ */
+function triggerCrisis(reason) {
+  G.gameOver = true;
+  G.gameOverReason = reason;
+  G.won = false;
+  saveToStorage();
+
+  soundCrisis();
+
+  if (reason === 'confianza') {
+    document.getElementById('cr-icon').textContent = '📉';
+    document.getElementById('cr-title').textContent = 'CAÍDA DEL GOBIERNO';
+    document.getElementById('cr-desc').textContent =
+      `La confianza ciudadana en ${G.countryName} colapsó completamente. Manifestaciones masivas llenan las plazas, los partidos aliados retiran su apoyo y el Congreso aprueba el juicio político. Tu mandato presidencial ha llegado a un fin anticipado. La Historia juzgará tus decisiones.`;
+  } else {
+    document.getElementById('cr-icon').textContent = '🆘';
+    document.getElementById('cr-title').textContent = 'CRISIS HUMANITARIA';
+    document.getElementById('cr-desc').textContent =
+      `La pobreza en ${G.countryName} superó el 80%. Millones de ciudadanos no pueden cubrir sus necesidades básicas. Las organizaciones internacionales declaran emergencia humanitaria. Tu gestión pasará a la historia como una de las más devastadoras socialmente.`;
+  }
+
+  document.getElementById('crisis-overlay').classList.add('open');
+}
+
+function goToEndScreen() {
+  document.getElementById('crisis-overlay').classList.remove('open');
+  buildEndScreen();
+  showScreen('screen-end');
+}
+
+/* ============================================================
+   PANTALLA FINAL Y ANÁLISIS
+   ============================================================ */
+function buildEndScreen() {
+  checkAchievements(); // verificar todos los logros al final
+
+  const score = getScore(G.indicadores);
+  const won   = G.won;
+
+  // Diploma
+  let medal, tipo, titulo;
+  if (!won) {
+    medal = G.gameOverReason === 'confianza' ? '📉' : '🆘';
+    tipo  = 'MANDATO INTERRUMPIDO';
+    titulo = 'Gestión Truncada';
+    document.getElementById('diploma-box').style.borderColor = 'rgba(231,76,60,.5)';
+  } else if (score >= CONFIG.DIPLOMA_GOLD)   { medal='🥇'; tipo='DIPLOMA DE ORO';    titulo='Gestión Ejemplar';         document.getElementById('diploma-box').style.borderColor='rgba(201,168,76,.7)'; }
+  else if (score >= CONFIG.DIPLOMA_SILVER)   { medal='🥈'; tipo='DIPLOMA DE PLATA';  titulo='Gestión Correcta';         document.getElementById('diploma-box').style.borderColor='rgba(180,180,180,.5)'; }
+  else if (score >= CONFIG.DIPLOMA_BRONZE)   { medal='🥉'; tipo='DIPLOMA DE BRONCE'; titulo='Gestión con Dificultades'; document.getElementById('diploma-box').style.borderColor='rgba(176,107,70,.5)'; }
+  else                                        { medal='📜'; tipo='CERTIFICADO';       titulo='Gestión Criticada';        document.getElementById('diploma-box').style.borderColor='rgba(100,100,100,.4)'; }
+
+  document.getElementById('dip-medal').textContent   = medal;
+  document.getElementById('dip-tipo').textContent    = tipo;
+  document.getElementById('dip-title').textContent   = titulo;
+  document.getElementById('dip-country').textContent = G.countryName;
+  document.getElementById('dip-score').textContent   = score;
+
+  // Análisis
+  document.getElementById('analysis-text').innerHTML = generateAnalysis(score, won);
+
+  // Stats finales
+  const statsGrid = document.getElementById('final-stats');
+  statsGrid.innerHTML = '';
+  IND_META.forEach(m => {
+    const val   = Math.round(G.indicadores[m.key]);
+    const color = getColor(m.key, val);
+    const box   = document.createElement('div');
+    box.className = 'stat-box';
+    box.innerHTML = `<div class="stat-val" style="color:${color}">${val}${m.unit}</div><div class="stat-lbl">${m.emoji} ${m.name}</div>`;
+    statsGrid.appendChild(box);
+  });
+
+  // Logros
+  const grid = document.getElementById('ach-grid');
+  grid.innerHTML = '';
+  ACHIEVEMENTS.forEach(a => {
+    const unlocked = G.unlocked.includes(a.id);
+    const card = document.createElement('div');
+    card.className = `ach-card ${unlocked ? 'unlocked' : 'locked'}`;
+    card.innerHTML = `<span class="ach-icon">${a.icon}</span><div class="ach-name">${a.name}</div><div class="ach-desc">${a.desc}</div>`;
+    grid.appendChild(card);
+  });
+}
+
+function generateAnalysis(score, won) {
+  const ind = G.indicadores;
+  const parts = [];
+
+  if (!won) {
+    parts.push(`<p>Tu mandato llegó a un fin anticipado en el mes ${G.turn} de ${CONFIG.TOTAL_TURNS}. ${G.gameOverReason === 'confianza' ? 'La pérdida de confianza ciudadana determinó el colapso político de tu gobierno.' : 'La crisis social generada por los altísimos niveles de pobreza hizo insostenible tu gestión.'}</p>`);
+  } else {
+    parts.push(`<p>¡Felicitaciones! Completaste los 4 años de mandato al frente de <strong>${G.countryName}</strong> con un puntaje final de gestión de <strong>${score} puntos</strong>. ${score >= CONFIG.DIPLOMA_GOLD ? 'Tu desempeño fue sobresaliente.' : score >= CONFIG.DIPLOMA_SILVER ? 'Tu desempeño fue correcto.' : score >= CONFIG.DIPLOMA_BRONZE ? 'Tu gestión enfrentó dificultades significativas.' : 'Tu gestión fue duramente criticada.'}</p>`);
+  }
+
+  if (ind.ipc < 40) parts.push(`<p>✅ <strong>Inflación controlada:</strong> el IPC de ${Math.round(ind.ipc)}% refleja una gestión monetaria y fiscal prudente. La estabilidad de precios es fundamental para proteger el poder adquisitivo de los sectores más vulnerables.</p>`);
+  else if (ind.ipc > 65) parts.push(`<p>❌ <strong>Inflación crónica:</strong> con un IPC de ${Math.round(ind.ipc)}%, la economía sufrió una erosión severa del salario real. La inflación es el impuesto más regresivo que pagan quienes menos tienen.</p>`);
+
+  if (ind.pobreza < 25) parts.push(`<p>✅ <strong>Reducción de la pobreza:</strong> un índice de ${Math.round(ind.pobreza)}% indica que las políticas sociales lograron ampliar el bienestar en sectores históricamente excluidos.</p>`);
+  else if (ind.pobreza > 50) parts.push(`<p>❌ <strong>Crisis social:</strong> el ${Math.round(ind.pobreza)}% de pobreza revela que las políticas adoptadas no lograron distribuir los beneficios del crecimiento. La economía creció, si es que creció, sin incluir.</p>`);
+
+  if (ind.reservas > 65) parts.push(`<p>✅ <strong>Reservas sólidas:</strong> con ${Math.round(ind.reservas)} puntos de reservas, la economía tuvo respaldo monetario para enfrentar shocks externos sin necesidad de ajustes traumáticos.</p>`);
+  else if (ind.reservas < 30) parts.push(`<p>❌ <strong>Reservas críticas:</strong> la caída de reservas a ${Math.round(ind.reservas)} puntos dejó a la economía muy expuesta a corridas cambiarias y crisis de balanza de pagos.</p>`);
+
+  if (ind.produccion > 70) parts.push(`<p>✅ <strong>Economía productiva:</strong> el índice de producción industrial de ${Math.round(ind.produccion)} refleja una política activa de apoyo al aparato productivo y un tejido industrial saludable.</p>`);
+  else if (ind.produccion < 40) parts.push(`<p>❌ <strong>Desindustrialización:</strong> la caída productiva a ${Math.round(ind.produccion)} señala el deterioro de la capacidad manufacturera y el aumento de la dependencia de importaciones.</p>`);
+
+  parts.push(`<p><em>🎓 Reflexión final: Toda decisión de política económica involucra trade-offs. La inflación puede reducirse con recesión; la deuda puede evitarse con ajuste social. El arte de gobernar democráticamente es encontrar caminos que minimicen los costos humanos de cada elección difícil.</em></p>`);
+
+  return parts.join('');
+}
+
+function getScore(ind) {
+  return Math.round(
+    ind.confianza            * 0.20 +
+    (100 - ind.pobreza)      * 0.20 +
+    (100 - ind.ipc)          * 0.15 +
+    (100 - ind.desocupacion) * 0.15 +
+    ind.produccion           * 0.15 +
+    ind.reservas             * 0.10 +
+    (100 - ind.riesgo)       * 0.05
+  );
+}
+
+/* ============================================================
+   LOGROS
+   ============================================================ */
+function checkAchievements() {
+  ACHIEVEMENTS.forEach(a => {
+    if (!G.unlocked.includes(a.id) && a.check(G)) {
+      G.unlocked.push(a.id);
+      showAchToast(a);
+    }
+  });
+}
+
+function showAchToast(a) {
+  soundAchievement();
+  const t = document.createElement('div');
+  t.className = 'ach-toast';
+  t.innerHTML = `<span class="toast-ico">${a.icon}</span><div class="toast-txt"><strong>¡Logro desbloqueado!</strong><span>${a.name}</span></div>`;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3200);
+}
+
+/* ============================================================
+   REINICIO
+   ============================================================ */
+function restartGame() {
+  if (!confirm('¿Querés reiniciar con un nuevo país?')) return;
+  localStorage.removeItem('sdr_save');
+  G = null;
+  document.getElementById('country-name').value = '';
+  showScreen('screen-start');
+}
+
+/* ============================================================
+   AUDIO (Web Audio API, sin archivos externos)
+   ============================================================ */
+let _audioCtx = null;
+function getACtx() {
+  if (!_audioCtx) _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  // iOS Safari requires resume() after user gesture
+  if (_audioCtx.state === 'suspended') {
+    _audioCtx.resume();
+  }
+  return _audioCtx;
+}
+function playTone(freq, dur = 0.15, type = 'sine', vol = 0.15) {
+  try {
+    const ctx = getACtx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.connect(g); g.connect(ctx.destination);
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
+    o.start(ctx.currentTime); o.stop(ctx.currentTime + dur);
+  } catch(e) {}
+}
+function soundCrisis()      { playTone(200,.4,'sawtooth',.2); setTimeout(()=>playTone(150,.5,'sawtooth',.18),400); }
+function soundAchievement() { [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,.15,'sine',.2),i*100)); }
+function soundVictory()     { [523,659,784,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,.18,'sine',.2),i*130)); }
+
+/* ============================================================
+   INICIALIZACIÓN
+   ============================================================ */
+window.addEventListener('load', () => {
+  // Mostrar "Continuar Partida" si hay save
+  if (localStorage.getItem('sdr_save')) {
+    document.getElementById('load-btn').textContent = '💾 Continuar Partida';
+  }
+});
+</script>
+</body>
+</html>
